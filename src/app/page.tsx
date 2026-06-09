@@ -39,10 +39,13 @@ export default function Home() {
         
         {/* Technical Grid Background */}
         <div style={{
-          position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, transparent calc(50% - 1px), oklch(99% 0.005 250 / 0.03) calc(50% - 1px), oklch(99% 0.005 250 / 0.03) 50%, transparent 50%)",
+          position: "absolute", 
+          inset: 0,
+          // Ditingkatkan sedikit opacity-nya dari 0.03 ke 0.06 agar lebih konsisten di berbagai layar
+          background: "linear-gradient(to bottom, transparent calc(50% - 1px), oklch(99% 0.005 250 / 0.06) calc(50% - 1px), oklch(99% 0.005 250 / 0.06) 50%, transparent 50%)",
           backgroundSize: "10px 10px",
-          pointerEvents: "none"
+          pointerEvents: "none",
+          opacity: 0.8 // Menambah sedikit kontrol transparansi global
         }} />
 
         <div style={{ maxWidth: "860px", margin: "0 auto", position: "relative", zIndex: 1, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "32px" }}>
