@@ -18,4 +18,8 @@ if (!globalWithMongo._mongoClient) {
 }
 
 export const Client: MongoClient = globalWithMongo._mongoClient
+<<<<<<< HEAD
 export const DB: Db = globalWithMongo._db!
+=======
+export const DB: Db = globalWithMongo._db!
+>>>>>>> 1e1d69a2773fb1aeebc16b62680e9d0ca9a34346
