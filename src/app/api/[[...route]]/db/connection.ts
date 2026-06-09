@@ -6,20 +6,16 @@ if (!process.env.MONGODB) {
     throw new Error("DATABASE CONFIG NOT FOUND AT .env")
 }
 
-const uri = process.env.MONGODB as string
-
 const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
+    _mongoClient?: MongoClient
+    _db?: Db
 }
 
-if (!globalWithMongo._mongoClientPromise) {
-    const client = new MongoClient(uri)
-    globalWithMongo._mongoClientPromise = client.connect()
+if (!globalWithMongo._mongoClient) {
+    globalWithMongo._mongoClient = new MongoClient(process.env.MONGODB as string)
+    globalWithMongo._mongoClient.connect()
+    globalWithMongo._db = globalWithMongo._mongoClient.db("HOSHICBT")
 }
 
-const clientPromise = globalWithMongo._mongoClientPromise
-
-export async function getDB(): Promise<Db> {
-    const client = await clientPromise
-    return client.db("HOSHICBT")
-}
+export const Client: MongoClient = globalWithMongo._mongoClient
+export const DB: Db = globalWithMongo._db!
