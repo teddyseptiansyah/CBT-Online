@@ -1,60 +1,56 @@
 import { Context } from "hono"
 import crypto from "crypto"
-import dotenv from "dotenv-extended"
-import path from "path"
-import fs from "fs"
-import { File } from "buffer"
+import { v2 as cloudinary } from "cloudinary"
 
-dotenv.load()
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
-export async function upload(c: Context){
-    try{
+export async function upload(c: Context) {
+    try {
         const body = await c.req.parseBody()
-            
-        if(body["file"] instanceof File){
-            const file: File = body["file"]
-            const type: string = <string>body["type"]
-            const date = new Date()
-            const extension = file.name.split(".")[file.name.split(".").length-1]
-            const hash = crypto.createHash("sha256")
-                .update(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}.${file.name}`)
-                .digest("hex")
-    
-            let filename = ""
-            if(type == "image"){
-                filename = path.join(<string>process.env.UPLOAD_MAIN_DIR, <string>process.env.UPLOAD_IMG_DIR, `${hash}.${extension}`)
-            }
-            else if(type == "audio"){
-                filename = path.join(<string>process.env.UPLOAD_MAIN_DIR, <string>process.env.UPLOAD_AUDIO_DIR, `${hash}.${extension}`)
-            }
-            else{
-                return c.json({
-                    status: "FAIL"
-                })
-            }
-    
-            fs.writeFileSync(
-                filename, 
-                Buffer.from(await file.arrayBuffer())
-            )
-    
-            return c.json({
-                status: "OK",
-                path: `/api/uploads/${type == "image" ? "img": "audio"}/${hash}.${extension}`
-            })
+
+        if (!(body["file"] instanceof File)) {
+            return c.json({ status: "FAIL", msg: "Only File" })
         }
-        else{
-            return c.json({
-                status: "FAIL",
-                msg: "Only File"
-            })
+
+        const file = body["file"] as File
+        const type = body["type"] as string
+
+        if (type !== "image" && type !== "audio") {
+            return c.json({ status: "FAIL" })
         }
-    
-    }
-    catch(e: any){
-        return c.json({
-            status: "FAIL",
-            msg: e.message
+
+        const date = new Date()
+        const extension = file.name.split(".").pop()
+        const hash = crypto.createHash("sha256")
+            .update(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}.${file.name}`)
+            .digest("hex")
+
+        const publicId = `${type === "image" ? "img" : "audio"}/${hash}`
+        const resourceType = type === "image" ? "image" : "video" // cloudinary pakai "video" untuk audio
+
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+
+        const result = await new Promise<any>((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                { public_id: publicId, resource_type: resourceType },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            ).end(buffer)
         })
+
+        return c.json({
+            status: "OK",
+            path: result.secure_url,
+        })
+
+    } catch (e: any) {
+        return c.json({ status: "FAIL", msg: e.message })
     }
 }

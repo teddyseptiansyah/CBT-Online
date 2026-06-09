@@ -2,10 +2,20 @@ import { MongoClient, Db } from "mongodb"
 import dotenv from "dotenv-extended"
 dotenv.load()
 
-if(!process.env.MONGODB){
-    console.log("DATABASE CONFIG NOT FOUND AT .env");
-    process.exit()
+if (!process.env.MONGODB) {
+    throw new Error("DATABASE CONFIG NOT FOUND AT .env")
 }
 
-export const Client: MongoClient = new MongoClient(process.env.MONGODB);
-export const DB: Db = Client.db("HOSHICBT")
+const globalWithMongo = global as typeof globalThis & {
+    _mongoClient?: MongoClient
+    _db?: Db
+}
+
+if (!globalWithMongo._mongoClient) {
+    globalWithMongo._mongoClient = new MongoClient(process.env.MONGODB as string)
+    globalWithMongo._mongoClient.connect()
+    globalWithMongo._db = globalWithMongo._mongoClient.db("HOSHICBT")
+}
+
+export const Client: MongoClient = globalWithMongo._mongoClient
+export const DB: Db = globalWithMongo._db!
