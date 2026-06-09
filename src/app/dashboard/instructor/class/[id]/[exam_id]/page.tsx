@@ -1,683 +1,400 @@
+/* Hallmark · macrostructure: Workbench · genre: modern-minimal
+ * tone: institutional-austere · anchor hue: oklch(28% 0.14 258) navy
+ * CSS → globals.css (semua class io-* ada di sana)
+ */
 "use client"
-import { Questions } from "@/app/api/[[...route]]/types/exam";
-import { Users } from "@/app/api/[[...route]]/types/user";
-import DeletePrompt from "@/components/deletePrompt";
-import LoadingModal from "@/components/loadingModal";
-import Modal from "@/components/modal";
-import Navbar from "@/components/InstructorNavbar";
-import QuestionsForm from "@/components/questionsForm";
-import { SessionList } from "@/components/sessionList";
-import Splash from "@/components/splash";
-import { UserData } from "@/context/UserData";
-import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { Classroom } from "@/app/api/[[...route]]/types/class";
-import { ClassroomList } from "@/context/ClassroomList";
+import { Questions } from "@/app/api/[[...route]]/types/exam"
+import { Users } from "@/app/api/[[...route]]/types/user"
+import DeletePrompt from "@/components/deletePrompt"
+import LoadingModal from "@/components/loadingModal"
+import Navbar from "@/components/InstructorNavbar"
+import QuestionsForm from "@/components/questionsForm"
+import { SessionList } from "@/components/sessionList"
+import Splash from "@/components/splash"
+import { UserData } from "@/context/UserData"
+import { useParams } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
+import { Classroom } from "@/app/api/[[...route]]/types/class"
+import { ClassroomList } from "@/context/ClassroomList"
 
-export default function ExamEdit(){
-    let [userData, setUserData] = useState<Users>()
-    let [load, setLoad] = useState(true)
-    let [duration, setDuration] = useState("")
-    let [millis, setMillis] = useState(0)
-    let [saved, setSaved] = useState(true)
-    let [process, setProcess] = useState(false)
-    let [examName, setExamName] = useState("")
-    let [modalAttachment, setModalAttachment] = useState(false)
-    let [questions, setQuestions] = useState([] as Questions[])
-    let [drag, setDrag] = useState(false)
-    let [file, setFile] = useState({} as File)
-    let [fileType, setFileType] = useState("")
-    let [uploadLoading, setUploadLoading] = useState(false)
-    let [selectedQIndex, setSelectedQIndex] = useState(0)
-    let [selectedAIndex, setSelectedAIndex] = useState(0)
-    let [showDelete, setShowDelete] = useState(false)
-    let [showDeleteSession, setShowDeleteSession] = useState(false)
-    let [showSession, setShowSession] = useState(false)
-    let [examSession, setExamSession] = useState([] as any)
-    let [classrooms, setClassrooms] = useState([] as Classroom[])
-    const { id, exam_id } = useParams()
-    const AddAttachment = useRef({} as HTMLDialogElement)
+const IcoPlus = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+)
+const IcoClose = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+const IcoSave = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+    <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+  </svg>
+)
+const IcoTrash = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    <path d="M10 11v6M14 11v6"/>
+    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </svg>
+)
 
-    useEffect(() => {
-        if(modalAttachment){
-            AddAttachment.current.showModal()
+export default function ExamEdit() {
+  const [userData,        setUserData]        = useState<Users>()
+  const [load,            setLoad]            = useState(true)
+  const [duration,        setDuration]        = useState("")
+  const [millis,          setMillis]          = useState(0)
+  const [saved,           setSaved]           = useState(true)
+  const [process,         setProcess]         = useState(false)
+  const [examName,        setExamName]        = useState("")
+  const [modalAttachment, setModalAttachment] = useState(false)
+  const [questions,       setQuestions]       = useState<Questions[]>([])
+  const [drag,            setDrag]            = useState(false)
+  const [file,            setFile]            = useState<File>({} as File)
+  const [fileType,        setFileType]        = useState("")
+  const [uploadLoading,   setUploadLoading]   = useState(false)
+  const [selectedQIndex,  setSelectedQIndex]  = useState(0)
+  const [selectedAIndex,  setSelectedAIndex]  = useState(0)
+  const [showDelete,       setShowDelete]      = useState(false)
+  const [showDeleteSession,setShowDeleteSession] = useState(false)
+  const [showSession,      setShowSession]     = useState(false)
+  const [examSession,      setExamSession]     = useState<any[]>([])
+  const [classrooms,       setClassrooms]      = useState<Classroom[]>([])
+  const [urlInput,         setUrlInput]        = useState("")
+
+  const { id, exam_id } = useParams()
+  const overlayAttachment = useRef<HTMLDivElement>(null)
+
+  const openAttachment  = () => overlayAttachment.current?.classList.add("io-open")
+  const closeAttachment = () => { overlayAttachment.current?.classList.remove("io-open"); setModalAttachment(false) }
+
+  useEffect(() => {
+    if (modalAttachment) openAttachment()
+    else closeAttachment()
+  }, [modalAttachment])
+
+  function loadClassList() {
+    fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "GET_ALL_CLASSROOM" }),
+    })
+      .then(r => r.json())
+      .then(json => setClassrooms(json.data as Classroom[]))
+  }
+
+  async function loadExamData() {
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "GET_EXAM", data: { class_id: id, exam_id } }),
+    })
+    const json = await res.json()
+    const ms   = json.data.duration
+    const hours   = Math.floor(ms / (1000 * 60 * 60))
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+    setDuration(`${hours < 10 ? "0"+hours : hours}:${minutes < 10 ? "0"+minutes : minutes}`)
+    setQuestions(json.data.questions)
+    setExamName(json.data.exam_name)
+  }
+
+  async function deleteExam() {
+    setShowDelete(false); setLoad(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "DELETE_EXAM", data: { class_id: id, exam_id } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") document.location.href = `/dashboard/instructor/class/${id}`
+  }
+
+  async function addQuestion() {
+    setUploadLoading(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "NEW_QUESTION", data: { class_id: id, exam_id } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") loadExamData()
+    setUploadLoading(false)
+  }
+
+  async function deleteQuestion(index: number) {
+    setUploadLoading(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "DELETE_QUESTION", data: { class_id: id, exam_id, index } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") loadExamData()
+    setUploadLoading(false)
+  }
+
+  async function deleteAttachment(index: number, aindex: number) {
+    setUploadLoading(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "DELETE_ATTACHMENT", data: { class_id: id, exam_id, index, aindex } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") loadExamData()
+    setUploadLoading(false)
+  }
+
+  async function addAnswer(question_index: number) {
+    setUploadLoading(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "NEW_ANSWER", data: { class_id: id, exam_id, i: question_index } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") loadExamData()
+    setUploadLoading(false)
+  }
+
+  async function deleteAnswer(question_index: number, answer_index: number) {
+    setUploadLoading(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "DELETE_ANSWER", data: { class_id: id, exam_id, i: question_index, ai: answer_index } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") loadExamData()
+    setUploadLoading(false)
+  }
+
+  function saving() {
+    setProcess(true)
+    fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "SAVE_EXAM", data: { class_id: id, exam_id, exam_name: examName, duration: millis, questions } }),
+    })
+      .then(r => r.json())
+      .then(json => { setProcess(false); if (json.status !== "FAIL") setSaved(true) })
+  }
+
+  function correctToggle(question_index: number, answer_index: number) {
+    const qs = [...questions]
+    qs[question_index].list_answer[answer_index].correct = !qs[question_index].list_answer[answer_index].correct
+    setQuestions(qs); setSaved(false); saving()
+  }
+
+  async function newAttachment(data: object) {
+    setUploadLoading(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "NEW_ATTACHMENT", data: { ...data, class_id: id, exam_id } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") loadExamData()
+    setUploadLoading(false)
+  }
+
+  function uploadFile() {
+    closeAttachment(); setUploadLoading(true)
+    const formData = new FormData()
+    formData.append("file", file); formData.append("type", fileType)
+    fetch("/api/instructor/uploads", { method: "POST", body: formData })
+      .then(r => r.json())
+      .then(async json => {
+        if (json.status !== "FAIL") {
+          await newAttachment({ type: fileType === "image" ? "image" : "audio", from: "upload", source: json.path, i: selectedQIndex })
+          await loadExamData()
         }
-        else{
-            AddAttachment.current.close()
-        }
-    }, [modalAttachment]);
+        setUploadLoading(false); setFile({} as File); setFileType("")
+      })
+  }
 
-    function loadClassList(){
-        fetch("/api/instructor/", {
-            method: "POST",
-            body: JSON.stringify({
-                method: "GET_ALL_CLASSROOM"
-            })
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                setClassrooms(json.data as Classroom[])
-                console.log(classrooms)
-            })
+  useEffect(() => {
+    fetch("/api/auth/", {
+      method: "post",
+      body: JSON.stringify({ method: "AUTHENTICATION" }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.status !== "OK") { document.location.href = "/signin"; return }
+        switch (json.data.role) {
+          case "instructor":
+            setUserData(json.data)
+            loadExamData().then(() => setLoad(false))
+            break
+          case "user":  document.location.href = "/dashboard/user";  break
+          case "admin": document.location.href = "/dashboard/admin"; break
+        }
+      })
+  }, [])
+
+  useEffect(() => {
+    const splt = duration.split(":")
+    if (splt.length === 2) {
+      setMillis((parseInt(splt[0]) * 60 * 60 * 1000) + (parseInt(splt[1]) * 60 * 1000))
     }
+  }, [duration])
 
-    async function loadExamData(){
-        let res = await fetch(`/api/instructor/`, {
-            method: "POST",
-            body: JSON.stringify({
-                method: "GET_EXAM",
-                data: {
-                    class_id: id,
-                    exam_id,
-                },
-            }),
-        });
-        let json = await res.json()
-        let millis = json.data.duration
-        let hours = Math.floor(millis / (1000 * 60 * 60))
-        let minutes = Math.floor((millis / (1000 * 60 * 60)) / (1000 * 60))
-        let format = `${hours < 10 ? "0"+hours : hours}:${minutes < 10 ? "0"+minutes : minutes}`
-        console.log(format)
-        setDuration(format)
-        setQuestions(json.data.questions)
-        setExamName(json.data.exam_name)
-    }
+  useEffect(() => { if (!load) loadClassList() }, [load])
 
-    async function deleteExam(){
-        setShowDelete(false)
-        setLoad(true)
-        
-        let res = await fetch(`/api/instructor/`, {
-            method: "POST",
-            body: JSON.stringify({
-                method: "DELETE_EXAM",
-                data: {
-                    class_id: id,
-                    exam_id
-                }
-            })
-        })
-        let json = await res.json()
-        if(json.status != "FAIL"){
-            document.location.href = `/dashboard/instructor/class/${id}`;
-        }
-    }
+  async function resetSession() {
+    setShowDeleteSession(false); setLoad(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "RESET_SESSION", body: { class_id: id, exam_id } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") setLoad(false)
+  }
 
-    async function addQuestion(){
-        setUploadLoading(true)
-        try{
-            const res = await fetch(`/api/instructor/`, {
-                method: "POST",
-                body: JSON.stringify({
-                    method: "NEW_QUESTION",
-                    data: {
-                        class_id: id,
-                        exam_id
-                    }
-                })
-            })
-            const json = await res.json()
-            if(json.status != "FAIL"){
-                loadExamData()
-            }
-            setUploadLoading(false)
-        }
-        catch(e: any){
-            alert("error : "+e.message)
-        }
-    }
+  async function showModalSession() {
+    setShowSession(true)
+    const res  = await fetch("/api/instructor/", {
+      method: "POST",
+      body: JSON.stringify({ method: "GET_EXAM_SESSION", data: { class_id: id, exam_id } }),
+    })
+    const json = await res.json()
+    if (json.status !== "FAIL") setExamSession(json.data)
+  }
 
-    async function deleteQuestion(index: number){
-        setUploadLoading(true)
-        try{
-            const res = await fetch(`/api/instructor/`, {
-                method: "POST",
-                body: JSON.stringify({
-                    method: "DELETE_QUESTION",
-                    data: {
-                        class_id: id,
-                        exam_id,
-                        index
-                    }
-                })
-            })
-            const json = await res.json()
-            if(json.status != "FAIL"){
-                loadExamData()
-            }
-            setUploadLoading(false)
-        }
-        catch(e: any){
-            alert("error : "+e.message)
-        }
-    }
+  return (
+    <>
+      <Splash isLoad={load} />
+      <DeletePrompt promptText="Hapus ujian ini?" show={showDelete} setShow={setShowDelete} deleteFunction={deleteExam} />
+      <DeletePrompt promptText="Reset sesi ujian ini?" show={showDeleteSession} setShow={setShowDeleteSession} deleteFunction={resetSession} />
+      <LoadingModal show={uploadLoading} className="bg-white p-5 w-[50vw] min-h-[40vh] rounded-md flex flex-col justify-center items-center">
+        <span className="io-spin" style={{ width: "2rem", height: "2rem" }} />
+      </LoadingModal>
+      <SessionList show={showSession} setShow={setShowSession} examSession={examSession} />
 
-    async function deleteAttachment(index: number, aindex: number){
-        setUploadLoading(true)
-        try{
-            const res = await fetch(`/api/instructor/`, {
-                method: "POST",
-                body: JSON.stringify({
-                    method: "DELETE_ATTACHMENT",
-                    data: {
-                        class_id: id,
-                        exam_id,
-                        index,
-                        aindex
-                    }
-                })
-            })
-            const json = await res.json()
-            if(json.status != "FAIL"){
-                loadExamData()
-            }
-            setUploadLoading(false)
-        }
-        catch(e: any){
-            alert("error : "+e.message)
-        }
-    }
-
-    async function addAnswer(question_index: number){
-        setUploadLoading(true)
-        try{
-            const res = await fetch(`/api/instructor/`, {
-                method: "POST",
-                body: JSON.stringify({
-                    method: "NEW_ANSWER",
-                    data: {
-                        class_id: id,
-                        exam_id,
-                        i: question_index
-                    }
-                })
-            })
-            const json = await res.json()
-            if(json.status != "FAIL"){
-                loadExamData()
-            }
-            setUploadLoading(false)
-        }
-        catch(e: any){
-            alert("error : "+e.message)
-        }
-    }
-
-    async function deleteAnswer(question_index: number, answer_index: number){
-        setUploadLoading(true)
-        try{
-            const res = await fetch(`/api/instructor/`, {
-                method: "POST",
-                body: JSON.stringify({
-                    method: "DELETE_ANSWER",
-                    data: {
-                        class_id: id,
-                        exam_id,
-                        i: question_index,
-                        ai: answer_index
-                    }
-                })
-            })
-            const json = await res.json()
-            if(json.status != "FAIL"){
-                loadExamData()
-            }
-            setUploadLoading(false)
-        }
-        catch(e: any){
-            alert("error : "+e.message)
-        }
-    }
-
-    function saving(){
-        setProcess(true)
-        fetch(`/api/instructor/`, {
-            method: "POST",
-            body: JSON.stringify({
-                method: "SAVE_EXAM",
-                data: {
-                    class_id: id,
-                    exam_id,
-                    exam_name: examName,
-                    duration: millis,
-                    questions: questions
-                }
-            })
-        }).then((res) => res.json())
-        .then((json) => {
-            setProcess(false)
-            if(!(json.status == "FAIL")){
-                setSaved(true)
-            }
-        })
-    }
-
-    function correctToggle(question_index: number, answer_index: number){
-        let qs = [...questions]
-        qs[question_index].list_answer[answer_index].correct = !qs[question_index].list_answer[answer_index].correct
-        setQuestions(qs)
-        setSaved(false)
-        saving()
-    }
-
-    async function newAttachment(data: object){
-        setUploadLoading(true)
-        try{
-            const res = await fetch(`/api/instructor/`, {
-                method: "POST",
-                body: JSON.stringify({
-                    method: "NEW_ATTACHMENT",
-                    data: {
-                        ...data,
-                        class_id: id,
-                        exam_id
-                    }
-                })
-            })
-            const json = await res.json()
-            if(json.status != "FAIL"){
-                loadExamData()
-            }
-            setUploadLoading(false)
-        }
-        catch(e: any){
-            alert("error : "+e.message)
-        }
-    }
-
-    function uploadFile(){
-        setModalAttachment(false)
-        setUploadLoading(true)
-        const formData = new FormData()
-        formData.append("file", file)
-        formData.append("type", fileType)
-        fetch("/api/instructor/uploads", {
-            method: "POST",
-            body: formData
-        }).then((res) => {
-            return res.json()
-        }).then(async (json) => {
-            if(json.status != "FAIL"){
-                await newAttachment({
-                    type: fileType == "image" ? "image" : "audio",
-                    from: "upload",
-                    source: json.path,
-                    i: selectedQIndex
-                })
-
-                await loadExamData()
-            }
-            setUploadLoading(false)
-            setFile({} as File)
-            setFileType("")
-        })
-    }
-
-    useEffect(() => {
-        fetch("/api/auth/", {
-            method: "post",
-            body: JSON.stringify({
-                method: "AUTHENTICATION"
-            })
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                if (json.status != "OK") document.location.href = "/signin"
-                switch (json.data.role) {
-                    case "instructor":
-                        setUserData(json.data)
-                        loadExamData().then(() => {
-                            setLoad(!load)
-                        })
-                        break
-                    case "user":
-                        document.location.href = "/dashboard/user"
-                        break
-                    case "admin":
-                        document.location.href = "/dashboard/admin"
-                        break
-                }
-            })
-    }, [])
-
-    useEffect(() => {
-        const splt = duration.split(":")
-        const millis = (parseInt(splt[0]) * 60 * 60 * 1000) + (parseInt(splt[1]) * 60 * 1000)
-        setMillis(millis)
-
-        return
-    }, [duration])
-
-    useEffect(() => {
-        loadClassList()
-    }, [load])
-
-    async function resetSession() {
-        setShowDeleteSession(false)
-        setLoad(true)
-        const res = await fetch(`/api/instructor/`, {
-            method: "POST",
-            body: JSON.stringify({
-                method: "RESET_SESSION",
-                body: {
-                    class_id: id,
-                    exam_id
-                }
-            })
-        })
-        const json = await res.json()
-
-        if(json.status != "FAIL"){
-            setLoad(false)
-        }
-    }
-
-    async function showModalSession() {
-        setShowSession(true)
-        const res = await fetch(`/api/instructor/`, {
-            method: "POST",
-            body: JSON.stringify({
-                method: "GET_EXAM_SESSION",
-                data: {
-                    class_id: id,
-                    exam_id
-                }
-            })
-        })
-        const json = await res.json()
-        if(json.status != "FAIL") {
-            setExamSession(json.data)
-        }
-    }
-
-    return (
-        <>
-            <Splash isLoad={load}></Splash>
-            <DeletePrompt
-                promptText={"Delete This Exam ?"}
-                show={showDelete}
-                setShow={setShowDelete}
-                deleteFunction={deleteExam}
-            />
-            <DeletePrompt
-                promptText={"Reset This Exam Session ?"}
-                show={showDeleteSession}
-                setShow={setShowDeleteSession}
-                deleteFunction={resetSession}
-            />
-            <LoadingModal
-                show={uploadLoading}
-                className="bg-white p-5 w-[50vw] min-h-[40vh] rounded-md flex flex-col justify-center items-center"
-            >
-                <img
-                    src={"/img/BannerLogo.svg"}
-                    alt="logo"
-                    className={"w-[10rem] object-contain my-5 animate-bounce"}
-                />
-            </LoadingModal>
-            <SessionList
-                show={showSession}
-                setShow={setShowSession}
-                examSession={examSession}
-            />
-            <dialog
-                ref={AddAttachment}
-                className="modal modal-bottom sm:modal-middle"
-            >
-                <div className="modal-box">
-                    <h4 className="text-gray-600">File Type</h4>
-                    <select
-                        className="select select-bordered w-full my-1"
-                        onChange={(ev) => setFileType(ev.target.value)}
-                    >
-                        <option
-                            value=""
-                            selected={fileType == "" ? true : false}
-                        >
-                            Select
-                        </option>
-                        <option
-                            value="image"
-                            selected={fileType == "image" ? true : false}
-                        >
-                            Image
-                        </option>
-                        <option
-                            value="audio"
-                            selected={fileType == "audio" ? true : false}
-                        >
-                            Audio
-                        </option>
-                    </select>
-                    {fileType != "" ? (
-                        <>
-                            <h4 className="text-gray-600">Url</h4>
-                            <input
-                                type="text"
-                                placeholder="https://foo.bar/"
-                                className="w-full border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            />
-                            <h4 className="text-gray-600 text-center my-2">
-                                Or
-                            </h4>
-                            <h4 className="text-gray-600">File Upload</h4>
-                            <div
-                                className={
-                                    "bg-slate-200 w-full min-h-[6rem] rounded-md flex flex-col justify-center items-center " +
-                                    (drag ? "border border-[#ff7854]" : "")
-                                }
-                                onDragOver={(ev) => {
-                                    ev.preventDefault();
-                                    setDrag(true);
-                                }}
-                                onDragExit={(ev) => {
-                                    ev.preventDefault();
-                                    setDrag(false);
-                                }}
-                                onDrop={(ev) => {
-                                    ev.preventDefault();
-                                    setFile(ev.dataTransfer.files[0]);
-                                    setDrag(false);
-                                }}
-                            >
-                                {drag ? (
-                                    <h4 className="text-gray-900">Drag Here</h4>
-                                ) : (
-                                    <>
-                                        {!file.name ? (
-                                            <input
-                                                type="file"
-                                                className="file-input file-input-bordered text-xs max-w-xs"
-                                                onChange={(ev) =>
-                                                    setFile(
-                                                        ev.target.files
-                                                            ? ev.target.files[0]
-                                                            : ({} as File)
-                                                    )
-                                                }
-                                            />
-                                        ) : (
-                                            <div className="flex items-center">
-                                                <h4 className="text-gray-900 mx-2">
-                                                    {file.name}
-                                                </h4>
-                                                <button
-                                                    className="border shadow-sm shadow-gray-200 px-5 py-2 mx-2 bg-red-400 hover:bg-red-500 rounded-md text-white"
-                                                    onClick={(ev) =>
-                                                        setFile({} as File)
-                                                    }
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                            {file.name ? (
-                                <>
-                                    <input
-                                        onClick={(ev) => uploadFile()}
-                                        type="button"
-                                        value="Upload"
-                                        className={
-                                            "btn w-full bg-[#ff7854] hover:bg-[#ff4c1a] text-gray-100 mt-5 px-3 py-2 focus:outline-[#ff7854]"
-                                        }
-                                    />
-                                </>
-                            ) : (
-                                <></>
-                            )}
-                        </>
-                    ) : (
-                        <></>
-                    )}
-                </div>
-
-                <form method="dialog" className="modal-backdrop" onClick={() => setModalAttachment(false)}>
-                    <button>Close</button>
-                </form>
-            </dialog>
-
-            <div
-                className={
-                    "bg-white w-full min-h-[100vh]" + (load ? " hidden" : "")
-                }
-            >
-                <UserData.Provider value={userData as Users}>
-                    <ClassroomList.Provider value={classrooms}>
-                        <Navbar />
-                    </ClassroomList.Provider>
-                </UserData.Provider>
-                <div className="w-full z-0">
-                    <div className="flex justify-center">
-                        <div className="sm:border flex flex-col items-center mt-[4rem] sm:mt-[6rem] px-4 py-5 sm:rounded-md w-full sm:w-auto">
-                            <h2 className="mb-5 text-2xl font-semibold text-gray-600">
-                                Exam Editor
-                            </h2>
-                            <div className="w-full sm:w-[50vw]">
-                                <form
-                                    className="text-gray-600 w-full"
-                                    onSubmit={(ev) => {
-                                        ev.preventDefault();
-                                    }}
-                                >
-                                    <h4 className="my-2">Exam Name</h4>
-                                    <input
-                                        type="text"
-                                        value={examName}
-                                        onChange={(ev) => {
-                                            setSaved(false);
-                                            setExamName(ev.target.value);
-                                        }}
-                                        className="w-full border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                                    />
-                                    <h4 className="my-2">Duration</h4>
-                                    <input
-                                        type="time"
-                                        value={duration}
-                                        onChange={async (ev) => {
-                                            setSaved(false);
-                                            setDuration(ev.target.value);
-                                        }}
-                                        className="w-full border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                                    />
-                                    <h4 className="my-2">Action</h4>
-                                    <button
-                                        className="btn shadow-sm shadow-gray-200 w-[10rem] mx-1 my-1"
-                                        onClick={(ev) => showModalSession()}
-                                    >
-                                        <h3 className="text-center text-gray-600 font-semibold">
-                                            Show Session
-                                        </h3>
-                                    </button>
-                                    <button
-                                        className="btn shadow-sm shadow-gray-200 w-[10rem] mx-1 my-1"
-                                        onClick={(ev) =>
-                                            setShowDeleteSession(true)
-                                        }
-                                    >
-                                        <h3 className="text-center text-gray-600 font-semibold">
-                                            Reset Session
-                                        </h3>
-                                    </button>
-                                    <button
-                                        className="btn shadow-sm shadow-gray-200 w-[10rem] mx-1 my-1"
-                                        onClick={(ev) => setShowDelete(true)}
-                                    >
-                                        <h3 className="text-center text-gray-600 font-semibold">
-                                            Delete Exam
-                                        </h3>
-                                    </button>
-                                    {!saved ? (
-                                        <>
-                                            <input
-                                                onClick={(ev) => saving()}
-                                                type="button"
-                                                value="Save"
-                                                className={
-                                                    "w-full border border-slate-200 bg-[#ff7854] hover:bg-[#ff4c1a] text-gray-100 mt-5 px-3 py-2 focus:outline-[#ff7854] rounded-md cursor-pointer" +
-                                                    (process ? " hidden" : "")
-                                                }
-                                            />
-                                            <button
-                                                className={
-                                                    "w-full flex justify-center border border-slate-200 bg-[#ff4c1a] text-gray-100 focus:outline-[#ff7854] rounded-md cursor-pointer mt-5" +
-                                                    (process ? "" : " hidden")
-                                                }
-                                                disabled
-                                            >
-                                                <img
-                                                    src={"/img/load.svg"}
-                                                    alt="logo"
-                                                    className="w-[1.5rem] object-contain my-2"
-                                                />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <></>
-                                    )}
-                                    <h4 className="my-2">Questions</h4>
-                                    {questions.map(
-                                        (v: Questions, i: number) => (
-                                            <QuestionsForm
-                                                v={v}
-                                                i={i}
-                                                questions={questions}
-                                                setQuestions={setQuestions}
-                                                setSaved={setSaved}
-                                                setModalAttachment={
-                                                    setModalAttachment
-                                                }
-                                                setSelectedQIndex={
-                                                    setSelectedQIndex
-                                                }
-                                                setSelectedAIndex={
-                                                    setSelectedAIndex
-                                                }
-                                                correctToggle={correctToggle}
-                                                addAnswer={addAnswer}
-                                                deleteAnswer={deleteAnswer}
-                                                deleteQuestion={deleteQuestion}
-                                                saving={saving}
-                                                deleteAttachment={
-                                                    deleteAttachment
-                                                }
-                                            />
-                                        )
-                                    )}
-                                    <button
-                                        className="btn w-full my-2"
-                                        onClick={() => addQuestion()}
-                                    >
-                                        Add Question
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      {/* ── Attachment Modal ── */}
+      <div className="io-overlay" ref={overlayAttachment} onClick={e => { if (e.target === overlayAttachment.current) closeAttachment() }}>
+        <div className="io-modal" onClick={e => e.stopPropagation()}>
+          <div className="io-mhead">
+            <span className="io-mtitle">Tambah Lampiran</span>
+            <button className="io-mclose" onClick={closeAttachment}><IcoClose /></button>
+          </div>
+          <div className="io-mbody">
+            <div className="io-field">
+              <label className="io-label">Tipe File</label>
+              <select className="io-input" value={fileType} onChange={e => setFileType(e.target.value)}>
+                <option value="">Pilih tipe</option>
+                <option value="image">Image</option>
+                <option value="audio">Audio</option>
+              </select>
             </div>
-        </>
-    );
+            {fileType !== "" && (
+              <>
+                <div className="io-field">
+                  <label className="io-label">URL</label>
+                  <input className="io-input" type="text" placeholder="https://foo.bar/"
+                    value={urlInput} onChange={e => setUrlInput(e.target.value)} />
+                </div>
+                <p style={{ textAlign: "center", fontSize: "0.8rem", color: "oklch(55% 0.03 258)", margin: "4px 0" }}>atau</p>
+                <div className="io-field">
+                  <label className="io-label">Upload File</label>
+                  <div
+                    style={{
+                      background: drag ? "oklch(92% 0.06 258)" : "oklch(97% 0.005 258)",
+                      border: `1.5px dashed ${drag ? "oklch(42% 0.14 258)" : "oklch(85% 0.01 258)"}`,
+                      borderRadius: "8px", minHeight: "6rem",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 150ms ease", padding: "1rem"
+                    }}
+                    onDragOver={e => { e.preventDefault(); setDrag(true) }}
+                    onDragExit={e => { e.preventDefault(); setDrag(false) }}
+                    onDrop={e => { e.preventDefault(); setFile(e.dataTransfer.files[0]); setDrag(false) }}
+                  >
+                    {!file.name ? (
+                      <input type="file" className="io-input" style={{ border: "none", padding: 0, background: "transparent" }}
+                        onChange={e => setFile(e.target.files ? e.target.files[0] : ({} as File))} />
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "0.85rem", color: "oklch(20% 0.04 258)" }}>{file.name}</span>
+                        <button className="io-btn io-btn-danger io-btn-sm" onClick={() => setFile({} as File)}><IcoTrash /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="io-mfoot">
+            <button className="io-btn io-btn-ghost" onClick={closeAttachment}>Batal</button>
+            {file.name && (
+              <button className="io-btn io-btn-primary" onClick={uploadFile}>Upload</button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className={`io-page${load ? " hidden" : ""}`}>
+        <UserData.Provider value={userData as Users}>
+          <ClassroomList.Provider value={classrooms}>
+            <Navbar />
+          </ClassroomList.Provider>
+        </UserData.Provider>
+
+        <main className="io-main">
+          <div className="io-ph">
+            <div>
+              <p className="io-eyebrow">Instruktur</p>
+              <h1 className="io-title">Editor <strong>Ujian</strong></h1>
+            </div>
+            {!saved && (
+              <button className="io-btn io-btn-primary" onClick={saving} disabled={process}>
+                {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoSave /> Simpan</>}
+              </button>
+            )}
+          </div>
+
+          <div className="io-card" style={{ padding: "1.5rem" }}>
+            {/* Exam meta */}
+            <div className="io-field-row" style={{ marginBottom: "1rem" }}>
+              <div className="io-field">
+                <label className="io-label">Nama Ujian</label>
+                <input className="io-input" type="text" value={examName}
+                  onChange={e => { setSaved(false); setExamName(e.target.value) }} />
+              </div>
+              <div className="io-field">
+                <label className="io-label">Durasi</label>
+                <input className="io-input" type="time" value={duration}
+                  onChange={e => { setSaved(false); setDuration(e.target.value) }} />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "1.5rem" }}>
+              <button className="io-btn io-btn-ghost io-btn-sm" onClick={showModalSession}>Lihat Sesi</button>
+              <button className="io-btn io-btn-ghost io-btn-sm" onClick={() => setShowDeleteSession(true)}>Reset Sesi</button>
+              <button className="io-btn io-btn-danger io-btn-sm" onClick={() => setShowDelete(true)}><IcoTrash /> Hapus Ujian</button>
+            </div>
+
+            {/* Questions */}
+            <div style={{ borderTop: "1px solid oklch(93% 0.01 258)", paddingTop: "1.25rem" }}>
+              <p className="io-eyebrow" style={{ marginBottom: "1rem" }}>Soal</p>
+              {questions.map((v: Questions, i: number) => (
+                <QuestionsForm
+                  key={i}
+                  v={v} i={i}
+                  questions={questions}
+                  setQuestions={setQuestions}
+                  setSaved={setSaved}
+                  setModalAttachment={setModalAttachment}
+                  setSelectedQIndex={setSelectedQIndex}
+                  setSelectedAIndex={setSelectedAIndex}
+                  correctToggle={correctToggle}
+                  addAnswer={addAnswer}
+                  deleteAnswer={deleteAnswer}
+                  deleteQuestion={deleteQuestion}
+                  saving={saving}
+                  deleteAttachment={deleteAttachment}
+                />
+              ))}
+              <button className="io-btn io-btn-ghost" style={{ width: "100%", justifyContent: "center", marginTop: "8px" }} onClick={addQuestion}>
+                <IcoPlus /> Tambah Soal
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
+  )
 }

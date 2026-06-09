@@ -1,19 +1,47 @@
 type modalObject = {
     show: boolean
-    className: string
+    className?: string
     setShow: Function
     children: React.ReactNode
 }
 
-export default function Modal(props: modalObject){
+export default function Modal(props: modalObject) {
     return (
         <>
-            <div 
-                className={"fixed w-full min-h-[100vh] bg-black bg-opacity-25 z-20 " + (props.show? "" : "hidden")}
-                onClick={(ev) => props.setShow(false)}
+            {/* Backdrop */}
+            <div
+                onClick={() => props.setShow(false)}
+                style={{
+                    display: props.show ? "block" : "none",
+                    position: "fixed",
+                    inset: 0,
+                    background: "oklch(0% 0 0 / 0.4)",
+                    zIndex: 40,
+                }}
             />
-            <div className={props.className+" fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] items-center z-30 " + (props.show? "" : "hidden")}
-                onClick={(ev) => { return }}>
+
+            {/* Modal panel */}
+            <div
+                className={props.className ?? ""}
+                onClick={ev => ev.stopPropagation()}
+                style={{
+                    display: props.show ? "flex" : "none",
+                    flexDirection: "column",
+                    position: "fixed",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    zIndex: 50,
+                    background: "var(--io-surface, #fff)",
+                    border: "1px solid var(--io-border)",
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 32px oklch(0% 0 0 / 0.12)",
+                    minWidth: "320px",
+                    maxWidth: "90vw",
+                    maxHeight: "90vh",
+                    overflow: "auto",
+                }}
+            >
                 {props.children}
             </div>
         </>

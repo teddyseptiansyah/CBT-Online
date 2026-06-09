@@ -1,72 +1,71 @@
-export default function LandingNavbar(){
+"use client";
+import { useState, useEffect } from "react";
+import styles from "./LandingNavbar.module.css";
+
+const navLinks = [
+    { label: "About", href: "#about" },
+    { label: "Docs", href: "#docs" },
+    { label: "Changelog", href: "#changelog" },
+];
+
+export default function LandingNavbar() {
+    const [scrolled, setScrolled] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 40);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    function scrollTo(href: string) {
+        const id = href.replace("#", "");
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+        setMenuOpen(false);
+    }
+
     return (
-        <nav className="navbar bg-base-100 bg-opacity-30 backdrop-blur-md fixed top-0 shadow-sm">
-            <div className="navbar-start">
-                <div className="dropdown">
-                    <div
-                        tabIndex={0}
-                        role="button"
-                        className="btn btn-ghost lg:hidden"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M4 6h16M4 12h8m-8 6h16"
-                            />
-                        </svg>
-                    </div>
-                    <ul
-                        tabIndex={0}
-                        className="menu menu-sm dropdown-content bg-base-100 color-[#0dc0df] rounded-box z-[1] mt-3 w-52 p-2 shadow"
-                    >
-                        <li>
-                            <a>About</a>
-                        </li>
-                        <li>
-                            <a>Docs</a>
-                        </li>
-                        <li>
-                            <a>Changelog</a>
-                        </li>
+        <>
+            <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ""}`}>
+                <div className={styles.inner}>
+                    <a href="/" className={styles.logo}>
+                        <img src="/img/HeaderLogo.svg" alt="OPSCBT" />
+                    </a>
+                    <ul className={styles.links}>
+                        {navLinks.map((l) => (
+                            <li key={l.label}>
+                                <a href={l.href} onClick={(e) => { e.preventDefault(); scrollTo(l.href); }}>
+                                    {l.label}
+                                </a>
+                            </li>
+                        ))}
                     </ul>
+                    <div className={styles.actions}>
+                        <a href="/signin" className={styles.btnPrimary}>
+                            Sign In
+                        </a>
+                        <button
+                            className={`${styles.burger} ${menuOpen ? styles.open : ""}`}
+                            onClick={() => setMenuOpen(!menuOpen)}
+                            aria-label="Menu"
+                        >
+                            <span /><span /><span />
+                        </button>
+                    </div>
                 </div>
-                <a href="/" className="btn btn-ghost text-xl">
-                    <img
-                        src={"/img/HeaderLogo.svg"}
-                        alt="logo"
-                        className="w-[6rem] object-contain"
-                    />
-                </a>
-            </div>
-            <div className="navbar-center hidden lg:flex">
-                <ul className="menu menu-horizontal px-1">
-                    <li>
-                        <a>About</a>
-                    </li>
-                    <li>
-                        <a>Docs</a>
-                    </li>
-                    <li>
-                        <a>Changelog</a>
-                    </li>
-                </ul>
-            </div>
-            <div className="navbar-end">
-                <a className="btn btn-ghost" href="https://github.com/BoboiAzumi/HoshiCBT">
-                    <img
-                        src="/img/Octicons-mark-github.svg"
-                        className="w-[1.5rem]"
-                    />
-                </a>
-            </div>
-        </nav>
+            </nav>
+            {menuOpen && (
+                <div className={styles.mobileMenu}>
+                    {navLinks.map((l) => (
+                        <a key={l.label} href={l.href} onClick={(e) => { e.preventDefault(); scrollTo(l.href); }}>
+                            {l.label}
+                        </a>
+                    ))}
+                    <div className={styles.sep} />
+                    <a href="/signin" className={styles.btnPrimary} onClick={() => setMenuOpen(false)}>Sign In</a>
+                </div>
+            )}
+        </>
     );
 }

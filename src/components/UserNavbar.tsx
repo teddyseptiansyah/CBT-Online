@@ -1,152 +1,150 @@
-import { ClassroomDataList } from "@/context/ClassroomDataList";
+"use client"
+
+import { ClassroomDataList } from "@/context/ClassroomDataList"
 import { UserData } from "@/context/UserData"
-import { useContext } from "react"
-import { FaBuilding, FaHouse } from "react-icons/fa6";
+import { useContext, useState } from "react"
 
-export default function Navbar(){
-    let userData = useContext(UserData)
-    let classrooms = useContext(ClassroomDataList)
+const IcoMenu = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="4" y1="6" x2="20" y2="6"/>
+    <line x1="4" y1="12" x2="20" y2="12"/>
+    <line x1="4" y1="18" x2="20" y2="18"/>
+  </svg>
+)
 
-    return (
-        <>
-            <div className="drawer">
-                <input
-                    type="checkbox"
-                    id="drawerToggle"
-                    className="drawer-toggle"
-                />
-                <div className="drawer-content">
-                    <div className="navbar bg-base-100 bg-opacity-30 backdrop-blur-md fixed top-0 shadow-sm z-10">
-                        <div className="flex-none">
-                            <label
-                                htmlFor="drawerToggle"
-                                className="btn btn-square btn-ghost"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    className="inline-block h-5 w-5 stroke-current"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    ></path>
-                                </svg>
-                            </label>
-                        </div>
-                        <div className="flex-1">
-                            <a className="btn btn-ghost text-xl">
-                                <img
-                                    src={"/img/HeaderLogo.svg"}
-                                    alt="logo"
-                                    className="w-[6rem] object-contain"
-                                />
-                            </a>
-                        </div>
-                        <div className="flex-none dropdown dropdown-end">
-                            <button className="btn btn-square btn-ghost">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    className="inline-block h-5 w-5 stroke-current"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"
-                                    ></path>
-                                </svg>
-                            </button>
-                            <ul className="menu menu-sm dropdown-content bg-base-100 rounded-box mt-3 w-52 p-2 shadow">
-                                <li>
-                                    <a className="justify-center">
-                                        <h5 className="p-3 text-xs text-gray-600 font-semibold overflow-hidden text-center">
-                                            {userData?.information.fullname}
-                                        </h5>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a className="justify-between">Profile</a>
-                                </li>
-                                <li>
-                                    <a href="/dashboard/logout">Logout</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div className="drawer-side z-10">
-                    <label
-                        htmlFor="drawerToggle"
-                        aria-label="close sidebar"
-                        className="drawer-overlay"
-                    ></label>
-                    <div className="menu bg-base-100 min-h-full w-80 p-4 text-gray-600">
-                        <div className="flex w-full min-h-[10vh] justify-center">
-                            <img
-                                src={"/img/HeaderLogo.svg"}
-                                alt="logo"
-                                className="w-[6rem] object-contain"
-                            />
-                        </div>
-                        <ul>
-                            <li className="my-2">
-                                <h3 className="text-xl font-bold btn btn-ghost justify-start hover:bg-white">
-                                    Menu
-                                </h3>
-                            </li>
-                            <li className="my-2">
-                                <a
-                                    className="btn btn-ghost flex justify-start"
-                                    href={"/dashboard/user/"}
-                                >
-                                    <FaHouse />
-                                    <span className="ml-5">Home</span>
-                                </a>
-                            </li>
-                            {classrooms.map((v, i) => (
-                                <li className="my-2" key={i}>
-                                    {v.is_blocked ? (
-                                        <button
-                                            className={
-                                                "btn btn-ghost flex justify-start " +
-                                                (v.is_blocked ? "disabled" : "")
-                                            }
-                                            disabled
-                                        >
-                                            <FaBuilding />
-                                            <span className="ml-5">
-                                                {v.classes.name}
-                                            </span>
-                                        </button>
-                                    ) : (
-                                        <a
-                                            className={
-                                                "btn btn-ghost flex justify-start " +
-                                                (v.is_blocked ? "disabled" : "")
-                                            }
-                                            href={
-                                                "/dashboard/user/class/" +
-                                                v.classes._id
-                                            }
-                                        >
-                                            <FaBuilding />
-                                            <span className="ml-5">
-                                                {v.classes.name}
-                                            </span>
-                                        </a>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
+const IcoClose = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
+const IcoDots = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="5" cy="12" r="1" fill="currentColor"/>
+    <circle cx="12" cy="12" r="1" fill="currentColor"/>
+    <circle cx="19" cy="12" r="1" fill="currentColor"/>
+  </svg>
+)
+
+const IcoHome = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+)
+
+const IcoClass = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+    <rect x="2" y="3" width="20" height="14" rx="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/>
+    <line x1="12" y1="17" x2="12" y2="21"/>
+  </svg>
+)
+
+export default function Navbar() {
+  const userData   = useContext(UserData)
+  const classrooms = useContext(ClassroomDataList)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [dropOpen,   setDropOpen]   = useState(false)
+
+  return (
+    <>
+      {/* ── Top bar ── */}
+      <header className="io-navbar">
+        <button
+          className="io-navbar-icon-btn"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Buka menu"
+        >
+          <IcoMenu />
+        </button>
+
+        <a href="/dashboard/user" className="io-navbar-logo">
+          <span className="io-navbar-wordmark">OPSCBT</span>
+        </a>
+
+        <div style={{ position: "relative" }}>
+          <button
+            className="io-navbar-icon-btn"
+            onClick={() => setDropOpen(p => !p)}
+            aria-label="Menu pengguna"
+          >
+            <IcoDots />
+          </button>
+
+          {dropOpen && (
+            <>
+              <div
+                style={{ position: "fixed", inset: 0, zIndex: 49 }}
+                onClick={() => setDropOpen(false)}
+              />
+              <div className="io-dropdown">
+                <p className="io-dropdown-name">
+                  {userData?.information.fullname || userData?.username}
+                </p>
+                <div className="io-dropdown-divider" />
+                <a className="io-dropdown-item" href="#">Profil</a>
+                <a className="io-dropdown-item io-dropdown-item-danger" href="/dashboard/logout">Logout</a>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* ── Drawer overlay ── */}
+      {drawerOpen && (
+        <div
+          className="io-drawer-backdrop"
+          onClick={() => setDrawerOpen(false)}
+        />
+      )}
+
+      {/* ── Drawer ── */}
+      <aside className={`io-drawer${drawerOpen ? " io-drawer-open" : ""}`}>
+        <div className="io-drawer-head">
+          <span className="io-navbar-wordmark">OPSCBT</span>
+          <button
+            className="io-navbar-icon-btn"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Tutup menu"
+          >
+            <IcoClose />
+          </button>
+        </div>
+
+        <p className="io-drawer-section-label">Menu</p>
+
+        <nav className="io-drawer-nav">
+          <a
+            href="/dashboard/user/"
+            className="io-drawer-link"
+            onClick={() => setDrawerOpen(false)}
+          >
+            <span className="io-drawer-link-icon"><IcoHome /></span>
+            Home
+          </a>
+
+          {classrooms.map((v, i) => (
+            v.is_blocked ? (
+              <span key={i} className="io-drawer-link" style={{ opacity: 0.4, cursor: "not-allowed" }}>
+                <span className="io-drawer-link-icon"><IcoClass /></span>
+                {v.classes.name}
+              </span>
+            ) : (
+              <a
+                key={i}
+                href={`/dashboard/user/class/${v.classes._id}`}
+                className="io-drawer-link"
+                onClick={() => setDrawerOpen(false)}
+              >
+                <span className="io-drawer-link-icon"><IcoClass /></span>
+                {v.classes.name}
+              </a>
+            )
+          ))}
+        </nav>
+      </aside>
+    </>
+  )
 }

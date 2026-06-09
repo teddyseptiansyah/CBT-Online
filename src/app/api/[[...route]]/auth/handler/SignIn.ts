@@ -8,7 +8,9 @@ import { setCookie } from "hono/cookie"
 export async function SignIn(c: Context) {
     try{
         const { data } = await c.req.json()
-        const user: Users[] = await findUserByUserPassword(<string>data.username, crypto.createHash("sha256").update(<string>data.password).digest("hex"))
+        const hash = crypto.createHash("sha256").update(<string>data.password).digest("hex")
+
+        const user: Users[] = await findUserByUserPassword(<string>data.username, hash)
         
         if(user.length > 0){
             const jwt: JWTRegister = await register(<Users>{

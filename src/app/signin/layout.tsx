@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sign In Hoshi CBT",
-  description: "Opensource Computer Based Test",
-  icons: "HeaderLogo.svg"
+  title: "Masuk — OPSCBT",
+  description: "Masuk ke platform ujian online OPSCBT",
+  icons: "HeaderLogo.svg",
 };
 
-export default function RootLayout({ children, }: Readonly<{children: React.ReactNode;}>) {
+export default function SigninLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id">
-      <body className={inter.className}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

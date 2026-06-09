@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Answer, Attachment, Questions } from "@/app/api/[[...route]]/types/exam"
 
 type QuestionsParam = {
@@ -17,123 +18,228 @@ type QuestionsParam = {
     deleteAnswer: Function
 }
 
-export default function QuestionsForm(p: QuestionsParam){
+export default function QuestionsForm(p: QuestionsParam) {
+    const [open, setOpen] = useState(false)
+
+    const preview = p.v.question?.trim() ? p.v.question : "Belum ada pertanyaan"
+    const answerCount = p.v.list_answer?.length ?? 0
+    const correctCount = p.v.list_answer?.filter(a => a.correct).length ?? 0
+
     return (
-        <div className="w-full p-5 border border-slate-300 my-2 rounded-md">
-            <h4 className="mb-2">Question {p.i + 1}</h4>
-            <input
-                type="text"
-                value={p.v.question}
-                onChange={(ev) => {
-                    let q = [...p.questions];
-                    q[p.i].question = ev.target.value;
-                    p.setQuestions(q);
-                    p.setSaved(false);
-                }}
-                className="w-full border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                onBlur={(ev) => p.saving()}
-            />
-            <h4 className="my-2">Attachment</h4>
-            {p.v.attachment.map((w: Attachment, j: number) => (
-                <div className="flex" key={j}>
-                    <div className="w-[80%]">
-                        {w.type == "image" ? (
-                            <img
-                                width={75}
-                                height={75}
-                                src={w.source}
-                                alt="Attachment"
-                            />
-                        ) : (
-                            <audio controls>
-                                <source src={w.source} width={200} height={0} />
-                            </audio>
-                        )}
-                    </div>
-                    <div className="w-[20%] flex flex-col justify-center items-center">
-                        <button
-                            className="border shadow-sm shadow-gray-200 w-full px-5 py-2 bg-red-400 hover:bg-red-500 rounded-md text-white"
-                            onClick={() => {
-                                p.deleteAttachment(p.i, j);
-                            }}
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            ))}
-            <button
-                className="btn w-full my-2"
-                onClick={() => {
-                    p.setModalAttachment(true);
-                    p.setSelectedQIndex(p.i);
+        <div className="io-card" style={{ marginBottom: "8px", overflow: "hidden" }}>
+
+            {/* Accordion header */}
+            <div
+                onClick={() => setOpen(o => !o)}
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "16px 20px",
+                    cursor: "pointer",
+                    userSelect: "none",
+                    borderBottom: open ? "1px solid var(--io-border)" : "none",
                 }}
             >
-                Add Attachment
-            </button>
-            <h4 className="my-2">Answer</h4>
-            {p.v.list_answer.map((w: Answer, j: number) => (
-                <>
-                    <hr />
-                    <div className="flex my-1">
-                        <div className="w-[60%] flex flex-col justify-center items-center">
-                            <input
-                                type="text"
-                                value={w.text}
-                                onChange={(ev) => {
-                                    let qs = [...p.questions];
-                                    qs[p.i].list_answer[j].text =
-                                        ev.target.value;
-                                    p.setQuestions(qs);
-                                    p.setSaved(false);
-                                }}
-                                onBlur={(ev) => {
-                                    p.saving();
-                                }}
-                                className="w-full border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            />
-                        </div>
-                        <div className="w-[40%] grid grid-flow-row-dense grid-cols-1 lg:grid-cols-2">
-                            {w.correct ? (
-                                <button
-                                    className="btn shadow-sm shadow-gray-200 w-full bg-red-400 hover:bg-red-500 text-white"
-                                    onClick={() => p.correctToggle(p.i, j)}
-                                >
-                                    Unset Correct
-                                </button>
-                            ) : (
-                                <button
-                                    className="btn shadow-sm shadow-gray-200 w-full bg-blue-400 hover:bg-blue-500 text-white"
-                                    onClick={() => p.correctToggle(p.i, j)}
-                                >
-                                    Set Correct
-                                </button>
-                            )}
-                            <button
-                                className="btn shadow-sm shadow-gray-200 w-full bg-red-400 hover:bg-red-500 text-white"
-                                onClick={(ev) => {
-                                    p.deleteAnswer(p.i, j);
+                <span style={{
+                    flexShrink: 0,
+                    width: "28px", height: "28px",
+                    borderRadius: "50%",
+                    background: "oklch(55% 0.14 258)",
+                    color: "#fff",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                    {p.i + 1}
+                </span>
+
+                <span style={{
+                    flex: 1,
+                    fontSize: "14px",
+                    color: p.v.question?.trim() ? "var(--io-text)" : "oklch(60% 0 0)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                }}>
+                    {preview}
+                </span>
+
+                {!open && (
+                    <span style={{ fontSize: "12px", color: "oklch(60% 0 0)", flexShrink: 0 }}>
+                        {answerCount} jawaban{correctCount > 0 ? ` · ${correctCount} benar` : ""}
+                    </span>
+                )}
+
+                <svg
+                    width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{
+                        flexShrink: 0,
+                        transition: "transform 0.2s",
+                        transform: open ? "rotate(180deg)" : "rotate(0deg)",
+                        color: "oklch(60% 0 0)",
+                    }}
+                >
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </div>
+
+            {/* Collapsible body */}
+            {open && (
+                <div style={{ padding: "24px" }}>
+
+                    {/* Question text */}
+                    <div className="io-field" style={{ marginBottom: "24px" }}>
+                        <label className="io-label">Pertanyaan</label>
+                        <input
+                            type="text"
+                            className="io-input"
+                            value={p.v.question}
+                            onChange={(ev) => {
+                                let q = [...p.questions];
+                                q[p.i].question = ev.target.value;
+                                p.setQuestions(q);
+                                p.setSaved(false);
+                            }}
+                            onBlur={() => p.saving()}
+                        />
+                    </div>
+
+                    {/* Attachment section */}
+                    <div style={{ marginBottom: "20px" }}>
+                        <label className="io-label" style={{ marginBottom: "10px" }}>Lampiran</label>
+
+                        {p.v.attachment.map((w: Attachment, j: number) => (
+                            <div
+                                key={j}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "16px",
+                                    padding: "12px",
+                                    border: "1px solid var(--io-border)",
+                                    borderRadius: "8px",
+                                    marginBottom: "8px",
                                 }}
                             >
-                                Delete
-                            </button>
-                        </div>
+                                <div style={{ flex: 1 }}>
+                                    {w.type === "image" ? (
+                                        <img
+                                            width={75}
+                                            height={75}
+                                            src={w.source}
+                                            alt="Attachment"
+                                            style={{ borderRadius: "6px", objectFit: "cover" }}
+                                        />
+                                    ) : (
+                                        <audio controls style={{ width: "100%", maxWidth: "280px" }}>
+                                            <source src={w.source} />
+                                        </audio>
+                                    )}
+                                </div>
+                                <button
+                                    className="io-btn io-btn-danger"
+                                    onClick={() => p.deleteAttachment(p.i, j)}
+                                >
+                                    Hapus
+                                </button>
+                            </div>
+                        ))}
+
+                        <button
+                            className="io-btn io-btn-ghost"
+                            style={{ width: "100%", marginTop: "4px" }}
+                            onClick={() => {
+                                p.setModalAttachment(true);
+                                p.setSelectedQIndex(p.i);
+                            }}
+                        >
+                            + Tambah Lampiran
+                        </button>
                     </div>
-                </>
-            ))}
-            <hr />
-            <button
-                className="btn w-full my-2 shadow-sm shadow-gray-200"
-                onClick={(ev) => p.addAnswer(p.i)}
-            >
-                Add Answer
-            </button>
-            <button
-                className="btn shadow-sm shadow-gray-200 w-full bg-red-400 hover:bg-red-500 text-white"
-                onClick={() => p.deleteQuestion(p.i)}
-            >
-                Delete Question
-            </button>
+
+                    {/* Answers section */}
+                    <div>
+                        <label className="io-label" style={{ marginBottom: "10px" }}>Pilihan Jawaban</label>
+
+                        {p.v.list_answer.map((w: Answer, j: number) => (
+                            <div
+                                key={j}
+                                style={{
+                                    display: "flex",
+                                    gap: "12px",
+                                    alignItems: "center",
+                                    padding: "12px",
+                                    border: "1px solid var(--io-border)",
+                                    borderRadius: "8px",
+                                    marginBottom: "8px",
+                                    background: w.correct ? "oklch(97% 0.02 165 / 0.5)" : undefined,
+                                }}
+                            >
+                                <div style={{ flex: 1 }}>
+                                    <input
+                                        type="text"
+                                        className="io-input"
+                                        value={w.text}
+                                        onChange={(ev) => {
+                                            let qs = [...p.questions];
+                                            qs[p.i].list_answer[j].text = ev.target.value;
+                                            p.setQuestions(qs);
+                                            p.setSaved(false);
+                                        }}
+                                        onBlur={() => p.saving()}
+                                    />
+                                </div>
+                                <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                                    {w.correct ? (
+                                        <button
+                                            className="io-btn io-btn-danger"
+                                            onClick={() => p.correctToggle(p.i, j)}
+                                        >
+                                            Batalkan Benar
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="io-btn io-btn-primary"
+                                            onClick={() => p.correctToggle(p.i, j)}
+                                        >
+                                            Tandai Benar
+                                        </button>
+                                    )}
+                                    <button
+                                        className="io-btn io-btn-danger"
+                                        onClick={() => p.deleteAnswer(p.i, j)}
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        <button
+                            className="io-btn io-btn-ghost"
+                            style={{ width: "100%", marginTop: "4px" }}
+                            onClick={() => p.addAnswer(p.i)}
+                        >
+                            + Tambah Jawaban
+                        </button>
+                    </div>
+
+                    {/* Delete question */}
+                    <div style={{ borderTop: "1px solid var(--io-border)", marginTop: "24px", paddingTop: "20px" }}>
+                        <button
+                            className="io-btn io-btn-danger"
+                            style={{ width: "100%" }}
+                            onClick={() => p.deleteQuestion(p.i)}
+                        >
+                            Hapus Soal {p.i + 1}
+                        </button>
+                    </div>
+
+                </div>
+            )}
+
         </div>
-    );
+    )
 }

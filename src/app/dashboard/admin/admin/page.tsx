@@ -1,470 +1,444 @@
+/* Hallmark · macrostructure: Workbench · genre: modern-minimal
+ * tone: institutional-austere · anchor hue: oklch(28% 0.14 258) navy
+ * CSS → globals.css (semua class io-* ada di sana)
+ */
 "use client"
 import { Users } from "@/app/api/[[...route]]/types/user";
 import Navbar from "@/components/AdminNavbar";
 import Splash from "@/components/splash";
 import { UserData } from "@/context/UserData";
 import { useEffect, useRef, useState } from "react";
-import crypto from "crypto"
+import crypto from "crypto";
 
-export default function AdminEditorPage(){
-    let [userData, setUserData] = useState<Users>()
-    let [load, setLoad] = useState(true)
-    let [dataList, setDataList] = useState([] as Users[])
-    let [indexData, setIndexData] = useState(0)
-    let [process, setProcess] = useState(false)
-    let [changed, setChanged] = useState(false)
-    let [newAdmin, setNewAdmin] = useState({
-        username: "",
-        password: "",
-        role: "admin",
-        information: {
-            fullname: "",
-            email: "",
-            phone: "",
-            avatar: ""
+const BLANK: Users = {
+  username: "",
+  password: "",
+  role: "admin",
+  information: { fullname: "", email: "", phone: "", avatar: "" },
+};
+
+export default function AdminEditorPage() {
+  const [userData,   setUserData]   = useState<Users>();
+  const [load,       setLoad]       = useState(true);
+  const [dataList,   setDataList]   = useState<Users[]>([]);
+  const [indexData,  setIndexData]  = useState(0);
+  const [process,    setProcess]    = useState(false);
+  const [newAdmin,   setNewAdmin]   = useState<Users>({ ...BLANK, information: { ...BLANK.information } });
+  const [searchQ,    setSearchQ]    = useState("");
+  const [toast,      setToast]      = useState<{ msg: string; ok: boolean } | null>(null);
+  const [deleteTgt,  setDeleteTgt]  = useState<{ id: string; name: string } | null>(null);
+
+  const toastTimer  = useRef<ReturnType<typeof setTimeout>>();
+  const overlayNew  = useRef<HTMLDivElement>(null);
+  const overlayEdit = useRef<HTMLDivElement>(null);
+  const overlayDel  = useRef<HTMLDivElement>(null);
+
+  /* ── auth ── */
+  useEffect(() => {
+    fetch("/api/auth/", {
+      method: "post",
+      body: JSON.stringify({ method: "AUTHENTICATION" }),
+    })
+      .then(r => r.json())
+      .then(json => {
+        if (json.status !== "OK") { document.location.href = "/signin"; return; }
+        switch (json.data.role) {
+          case "instructor": document.location.href = "/dashboard/instructor"; break;
+          case "user":       document.location.href = "/dashboard/user";       break;
+          case "admin":
+            setUserData(json.data);
+            setLoad(false);
+            break;
         }
-    } as Users)
+      });
+  }, []);
 
-    const ps = useRef({} as HTMLInputElement)
-    const NewAdmin = useRef({} as HTMLDialogElement)
-    const DetailAdmin = useRef({} as HTMLDialogElement)
+  function loadDataList() {
+    fetch("/api/admin/", {
+      method: "post",
+      body: JSON.stringify({ method: "GET_ADMIN" }),
+    })
+      .then(r => r.json())
+      .then(json => { if (json.status !== "FAIL") setDataList(json.data); });
+  }
 
-    useEffect(() => {
-        fetch("/api/auth/", {
-            method: "post",
-            body: JSON.stringify({
-                method: "AUTHENTICATION",
-            }),
-        })
-            .then((r) => r.json())
-            .then((json) => {
-                if (json.status != "OK") document.location.href = "/signin"
-                switch (json.data.role) {
-                    case "instructor":
-                        document.location.href = "/dashboard/instructor"
-                        break
-                    case "user":
-                        document.location.href = "/dashboard/user"
-                        break
-                    case "admin":
-                        setUserData(json.data)
-                        setLoad(!load)
-                        break
-                }
-            })
-    }, [])
+  useEffect(() => { if (!load) loadDataList(); }, [load]);
 
-    function loadDataList(){
-        fetch("/api/admin/", {
-            method: "post",
-            body: JSON.stringify({
-                method: "GET_ADMIN"
-            })
-        }).then((res) => res.json())
-        .then((json) => {
-            if(json.status != "FAIL") setDataList(json.data);
-        })
+  /* ── toast ── */
+  function showToast(msg: string, ok = true) {
+    clearTimeout(toastTimer.current);
+    setToast({ msg, ok });
+    toastTimer.current = setTimeout(() => setToast(null), 3200);
+  }
+
+  /* ── modal helpers ── */
+  const openNew   = () => overlayNew.current?.classList.add("io-open");
+  const closeNew  = () => overlayNew.current?.classList.remove("io-open");
+  const openEdit  = () => overlayEdit.current?.classList.add("io-open");
+  const closeEdit = () => overlayEdit.current?.classList.remove("io-open");
+  const openDel   = () => overlayDel.current?.classList.add("io-open");
+  const closeDel  = () => { overlayDel.current?.classList.remove("io-open"); setDeleteTgt(null); };
+
+  /* ── save new ── */
+  async function saveNew() {
+    setProcess(true);
+    const res  = await fetch("/api/admin/", {
+      method: "POST",
+      body: JSON.stringify({ method: "ADD_ADMIN", data: newAdmin }),
+    });
+    const json = await res.json();
+    setProcess(false);
+    if (json.status !== "FAIL") {
+      setNewAdmin({ ...BLANK, information: { ...BLANK.information } });
+      loadDataList();
+      closeNew();
+      showToast("Admin berhasil ditambahkan.");
+    } else {
+      showToast("Gagal menambahkan admin.", false);
     }
+  }
 
-    useEffect(() => {
-        loadDataList()
-    }, [load])
-
-    async function change(){
-        setProcess(true)
-        const res = await fetch("/api/admin/", {
-            method: "POST",
-            body: JSON.stringify({
-                method: "MODIFY",
-                data: dataList[indexData]
-            })
-        })
-        const json = await res.json()
-        if(json.status != "FAIL"){
-            setProcess(false)
-            loadDataList()
-            DetailAdmin.current.close()
-        }
+  /* ── save edit ── */
+  async function saveEdit() {
+    setProcess(true);
+    const res  = await fetch("/api/admin/", {
+      method: "POST",
+      body: JSON.stringify({ method: "MODIFY", data: dataList[indexData] }),
+    });
+    const json = await res.json();
+    setProcess(false);
+    if (json.status !== "FAIL") {
+      loadDataList();
+      closeEdit();
+      showToast("Data admin diperbarui.");
+    } else {
+      showToast("Gagal menyimpan perubahan.", false);
     }
+  }
 
-    async function save(){
-        setProcess(true)
-        const res = await fetch("/api/admin/", {
-            method: "POST",
-            body: JSON.stringify({
-                method: "ADD_ADMIN",
-                data: newAdmin
-            })
-        })
-        const json = await res.json()
-        if(json.status != "FAIL"){
-            setProcess(false)
-            loadDataList()
-            setNewAdmin({
-                username: "",
-                password: "",
-                role: "admin",
-                information: {
-                    fullname: "",
-                    email: "",
-                    phone: "",
-                    avatar: ""
-                }
-            })
-            ps.current.value = ""
-            NewAdmin.current.close()
-        }
+  /* ── delete ── */
+  async function doDelete() {
+    if (!deleteTgt) return;
+    const res  = await fetch("/api/admin/", {
+      method: "POST",
+      body: JSON.stringify({ method: "DELETE", data: { id: deleteTgt.id } }),
+    });
+    const json = await res.json();
+    if (json.status !== "FAIL") {
+      loadDataList();
+      closeDel();
+      showToast("Admin dihapus.");
+    } else {
+      showToast("Gagal menghapus admin.", false);
     }
+  }
 
-    async function remove(id: string){
-        setLoad(true)
-        const res = await fetch("/api/admin/", {
-            method: "POST",
-            body: JSON.stringify({
-                method: "DELETE",
-                data: {
-                    id
-                }
-            })
-        })
-        const json = await res.json()
-        if(json.status != "FAIL"){
-            setLoad(false)
-            loadDataList()
-        }
-    }
-
+  const filtered = dataList.filter(v => {
+    if (!searchQ) return true;
+    const q = searchQ.toLowerCase();
     return (
-        <>
-            <Splash isLoad={load}></Splash>
-            <dialog
-                ref={DetailAdmin}
-                className="modal modal-bottom sm:modal-middle"
-            >
-                <div className="modal-box">
-                    <div className="flex flex-col">
-                        <div className="flex w-full justify-center">
-                            <h3 className="my-2 font-bold text-xl text-gray-700">
-                                Detail
-                            </h3>
-                        </div>
-                        <h6 className="text-gray-700">Username</h6>
-                        <input
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={
-                                dataList.length != 0
-                                    ? dataList[indexData].username
-                                    : ""
-                            }
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newDataList = [...dataList];
-                                newDataList[indexData].username =
-                                    ev.target.value;
-                                setDataList(newDataList);
-                            }}
-                            autoFocus={false}
-                        />
-                        <h6 className="text-gray-700">Password</h6>
-                        <input
-                            placeholder="Change Password"
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newDataList = [...dataList];
-                                newDataList[indexData].password = crypto
-                                    .createHash("sha256")
-                                    .update(ev.target.value)
-                                    .digest("hex");
-                                setDataList(newDataList);
-                            }}
-                        />
-                        <h6 className="text-gray-700">Fullname</h6>
-                        <input
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={
-                                dataList.length != 0
-                                    ? dataList[indexData].information.fullname
-                                    : ""
-                            }
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newDataList = [...dataList];
-                                newDataList[indexData].information.fullname =
-                                    ev.target.value;
-                                setDataList(newDataList);
-                            }}
-                        />
-                        <h6 className="text-gray-700">Email</h6>
-                        <input
-                            type="email"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={
-                                dataList.length != 0
-                                    ? dataList[indexData].information.email
-                                    : ""
-                            }
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newDataList = [...dataList];
-                                newDataList[indexData].information.email =
-                                    ev.target.value;
-                                setDataList(newDataList);
-                            }}
-                        />
-                        <h6 className="text-gray-700">Phone</h6>
-                        <input
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={
-                                dataList.length != 0
-                                    ? dataList[indexData].information.phone
-                                    : ""
-                            }
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newDataList = [...dataList];
-                                newDataList[indexData].information.phone =
-                                    ev.target.value;
-                                setDataList(newDataList);
-                            }}
-                        />
-                        {changed ? (
-                            <>
-                                <input
-                                    type="submit"
-                                    value="Change"
-                                    className={
-                                        "border border-slate-200 bg-[#ff7854] hover:bg-[#ff4c1a] text-gray-100 mt-5 px-3 py-2 focus:outline-[#ff7854] rounded-md cursor-pointer" +
-                                        (process ? " hidden" : "")
-                                    }
-                                    onClick={() => {
-                                        change();
-                                    }}
-                                />
-                                <button
-                                    className={
-                                        "flex justify-center border border-slate-200 bg-[#ff4c1a] text-gray-100 focus:outline-[#ff7854] rounded-md cursor-pointer mt-5" +
-                                        (process ? "" : " hidden")
-                                    }
-                                    disabled
-                                >
-                                    <img
-                                        src={"/img/load.svg"}
-                                        alt="logo"
-                                        className="w-[1.5rem] object-contain my-2"
-                                    />
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                className="border border-slate-200 bg-[#ff7854] hover:bg-[#ff4c1a] text-gray-100 mt-5 px-3 py-2 focus:outline-[#ff7854] rounded-md cursor-pointer"
-                                onClick={() => DetailAdmin.current.close()}
-                            >
-                                Close
-                            </button>
-                        )}
-                    </div>
-                </div>
-                <form method="dialog" className="modal-backdrop">
-                    <button>close</button>
-                </form>
-            </dialog>
-
-            <dialog
-                ref={NewAdmin}
-                className="modal modal-bottom sm:modal-middle"
-            >
-                <div className="modal-box">
-                    <div className="flex flex-col">
-                        <div className="flex w-full justify-center">
-                            <h3 className="my-2 font-bold text-xl text-gray-700">
-                                New Admin
-                            </h3>
-                        </div>
-                        <h6 className="text-gray-700">Username</h6>
-                        <input
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={newAdmin.username}
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newAdminObject = { ...newAdmin };
-                                newAdminObject.username = ev.target.value;
-                                setNewAdmin(newAdminObject);
-                            }}
-                            autoFocus={false}
-                        />
-                        <h6 className="text-gray-700">Password</h6>
-                        <input
-                            placeholder="Change Password"
-                            type="text"
-                            ref={ps}
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newAdminObject = { ...newAdmin };
-                                newAdminObject.password = crypto
-                                    .createHash("sha256")
-                                    .update(ev.target.value)
-                                    .digest("hex");
-                                setNewAdmin(newAdminObject);
-                            }}
-                            autoFocus={false}
-                        />
-                        <h6 className="text-gray-700">Fullname</h6>
-                        <input
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={newAdmin.information.fullname}
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newAdminObject = { ...newAdmin };
-                                newAdminObject.information.fullname =
-                                    ev.target.value;
-                                setNewAdmin(newAdminObject);
-                            }}
-                            autoFocus={false}
-                        />
-                        <h6 className="text-gray-700">Email</h6>
-                        <input
-                            type="email"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={newAdmin.information.email}
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newAdminObject = { ...newAdmin };
-                                newAdminObject.information.email =
-                                    ev.target.value;
-                                setNewAdmin(newAdminObject);
-                            }}
-                            autoFocus={false}
-                        />
-                        <h6 className="text-gray-700">Phone</h6>
-                        <input
-                            type="text"
-                            className="border border-slate-200 px-3 py-2 focus:outline-[#ff7854] rounded-md"
-                            value={newAdmin.information.phone}
-                            onChange={(ev) => {
-                                setChanged(true);
-                                const newAdminObject = { ...newAdmin };
-                                newAdminObject.information.phone =
-                                    ev.target.value;
-                                setNewAdmin(newAdminObject);
-                            }}
-                            autoFocus={false}
-                        />
-                        {changed ? (
-                            <>
-                                <input
-                                    type="submit"
-                                    value="Save"
-                                    className={
-                                        "border border-slate-200 bg-[#ff7854] hover:bg-[#ff4c1a] text-gray-100 mt-5 px-3 py-2 focus:outline-[#ff7854] rounded-md cursor-pointer" +
-                                        (process ? " hidden" : "")
-                                    }
-                                    onClick={() => {
-                                        save();
-                                    }}
-                                />
-                                <button
-                                    className={
-                                        "flex justify-center border border-slate-200 bg-[#ff4c1a] text-gray-100 focus:outline-[#ff7854] rounded-md cursor-pointer mt-5" +
-                                        (process ? "" : " hidden")
-                                    }
-                                    disabled
-                                >
-                                    <img
-                                        src={"/img/load.svg"}
-                                        alt="logo"
-                                        className="w-[1.5rem] object-contain my-2"
-                                    />
-                                </button>
-                            </>
-                        ) : (
-                            <form method="dialog">
-                                <button className="border border-slate-200 bg-[#ff7854] hover:bg-[#ff4c1a] text-gray-100 mt-5 px-3 py-2 focus:outline-[#ff7854] rounded-md cursor-pointer w-full">
-                                    Close
-                                </button>
-                            </form>
-                        )}
-                    </div>
-                </div>
-                <form method="dialog" className="modal-backdrop">
-                    <button>close</button>
-                </form>
-            </dialog>
-            <div
-                className={
-                    "bg-white w-full min-h-[100vh]" + (load ? " hidden" : "")
-                }
-            >
-                <UserData.Provider value={userData as Users}>
-                    <Navbar />
-                </UserData.Provider>
-                <div className="w-full z-0">
-                    <div className="flex flex-col items-center">
-                        <h2 className="mt-[7.5rem] mb-5 text-2xl font-semibold text-gray-600">
-                            Admin List
-                        </h2>
-                        <div className="w-[90vw] md:w-[50rem]">
-                            <button
-                                className="btn"
-                                onClick={() => NewAdmin.current.showModal()}
-                            >
-                                Add
-                            </button>
-                            <div className="overflow-x-auto">
-                                <table className="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Username</th>
-                                            <th>Fullname</th>
-                                            <th>Email</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {dataList.map((v: Users, i: number) => (
-                                            <tr>
-                                                <td>{v.username}</td>
-                                                <td>
-                                                    {v.information.fullname}
-                                                </td>
-                                                <td>{v.information.email}</td>
-                                                <td>
-                                                    <button
-                                                        className="btn border-slate-200 bg-blue-500 hover:bg-blue-800 text-gray-100 min-w-[6rem]"
-                                                        onClick={(e) => {
-                                                            setIndexData(i);
-                                                            DetailAdmin.current.showModal();
-                                                        }}
-                                                    >
-                                                        Detail
-                                                    </button>
-                                                    <button
-                                                        className="btn border-slate-200 bg-red-500 hover:bg-red-600 text-gray-100 min-w-[6rem]"
-                                                        onClick={() => {
-                                                            remove(
-                                                                v._id as string
-                                                            );
-                                                        }}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
+      v.username.toLowerCase().includes(q) ||
+      v.information.fullname.toLowerCase().includes(q) ||
+      v.information.email.toLowerCase().includes(q)
     );
+  });
+
+  /* ── icon helpers ── */
+  const IcoPlus = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  );
+  const IcoClose = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  );
+  const IcoCheck = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+  const IcoEdit = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  );
+  const IcoTrash = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      <path d="M10 11v6M14 11v6"/>
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+    </svg>
+  );
+  const IcoSearch = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  );
+
+  return (
+    <>
+      <Splash isLoad={load} />
+
+      <div className={`io-page${load ? " hidden" : ""}`}>
+        <UserData.Provider value={userData as Users}>
+          <Navbar />
+        </UserData.Provider>
+
+        <main className="io-main">
+
+          {/* Page header */}
+          <div className="io-ph">
+            <div>
+              <p className="io-eyebrow">Manajemen</p>
+              <h1 className="io-title">Daftar <strong>Admin</strong></h1>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span className="io-count">{dataList.length} admin</span>
+              <button className="io-btn io-btn-primary" onClick={openNew}>
+                <IcoPlus /> Tambah Admin
+              </button>
+            </div>
+          </div>
+
+          {/* Table card */}
+          <div className="io-card">
+            <div className="io-toolbar">
+              <div className="io-search-wrap">
+                <span className="io-search-icon"><IcoSearch /></span>
+                <input
+                  className="io-search"
+                  type="text"
+                  placeholder="Cari admin…"
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
+                />
+              </div>
+              <span className="io-meta">
+                Menampilkan {filtered.length} dari {dataList.length}
+              </span>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="io-empty">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <p>Belum ada admin terdaftar</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table className="io-table">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Nama Lengkap</th>
+                      <th>Email</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((v, i) => (
+                      <tr key={(v._id as string) ?? i}>
+                        <td><span className="io-td-user">{v.username}</span></td>
+                        <td>{v.information.fullname}</td>
+                        <td><span className="io-td-email">{v.information.email}</span></td>
+                        <td>
+                          <div className="io-td-actions">
+                            <button
+                              className="io-btn io-btn-ghost io-btn-sm"
+                              onClick={() => { setIndexData(dataList.indexOf(v)); openEdit(); }}
+                            >
+                              <IcoEdit /> Edit
+                            </button>
+                            <button
+                              className="io-btn io-btn-danger io-btn-sm"
+                              onClick={() => { setDeleteTgt({ id: v._id as string, name: v.information.fullname || v.username }); openDel(); }}
+                            >
+                              <IcoTrash /> Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* ── MODAL: TAMBAH ── */}
+      <div className="io-overlay" ref={overlayNew} onClick={e => { if (e.target === overlayNew.current) closeNew(); }}>
+        <div className="io-modal" onClick={e => e.stopPropagation()}>
+          <div className="io-mhead">
+            <span className="io-mtitle">Tambah Admin Baru</span>
+            <button className="io-mclose" onClick={closeNew} aria-label="Tutup"><IcoClose /></button>
+          </div>
+          <div className="io-mbody">
+            <div className="io-field-row">
+              <div className="io-field">
+                <label className="io-label">Username</label>
+                <input className="io-input" type="text" placeholder="cth. admin.budi"
+                  value={newAdmin.username}
+                  onChange={e => setNewAdmin(p => ({ ...p, username: e.target.value }))}
+                  autoComplete="off" />
+              </div>
+              <div className="io-field">
+                <label className="io-label">Password</label>
+                <input className="io-input" type="password" placeholder="••••••••"
+                  onChange={e => setNewAdmin(p => ({
+                    ...p,
+                    password: crypto.createHash("sha256").update(e.target.value).digest("hex"),
+                  }))}
+                  autoComplete="new-password" />
+              </div>
+            </div>
+            <div className="io-field">
+              <label className="io-label">Nama Lengkap</label>
+              <input className="io-input" type="text" placeholder="cth. Budi Santoso"
+                value={newAdmin.information.fullname}
+                onChange={e => setNewAdmin(p => ({ ...p, information: { ...p.information, fullname: e.target.value } }))} />
+            </div>
+            <div className="io-field-row">
+              <div className="io-field">
+                <label className="io-label">Email</label>
+                <input className="io-input" type="email" placeholder="email@domain.id"
+                  value={newAdmin.information.email}
+                  onChange={e => setNewAdmin(p => ({ ...p, information: { ...p.information, email: e.target.value } }))} />
+              </div>
+              <div className="io-field">
+                <label className="io-label">No. Telepon</label>
+                <input className="io-input" type="text" placeholder="08xx-xxxx-xxxx"
+                  value={newAdmin.information.phone}
+                  onChange={e => setNewAdmin(p => ({ ...p, information: { ...p.information, phone: e.target.value } }))} />
+              </div>
+            </div>
+          </div>
+          <div className="io-mfoot">
+            <button className="io-btn io-btn-ghost" onClick={closeNew}>Batal</button>
+            <button className="io-btn io-btn-primary" onClick={saveNew} disabled={process}>
+              {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoCheck /> Simpan</>}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MODAL: EDIT ── */}
+      <div className="io-overlay" ref={overlayEdit} onClick={e => { if (e.target === overlayEdit.current) closeEdit(); }}>
+        <div className="io-modal" onClick={e => e.stopPropagation()}>
+          <div className="io-mhead">
+            <span className="io-mtitle">Detail Admin</span>
+            <button className="io-mclose" onClick={closeEdit} aria-label="Tutup"><IcoClose /></button>
+          </div>
+          <div className="io-mbody">
+            <div className="io-field-row">
+              <div className="io-field">
+                <label className="io-label">Username</label>
+                <input className="io-input" type="text"
+                  value={dataList[indexData]?.username ?? ""}
+                  onChange={e => {
+                    const next = [...dataList];
+                    next[indexData] = { ...next[indexData], username: e.target.value };
+                    setDataList(next);
+                  }}
+                  autoComplete="off" />
+              </div>
+              <div className="io-field">
+                <label className="io-label">Password Baru</label>
+                <input className="io-input" type="password" placeholder="Kosongkan jika tidak diubah"
+                  onChange={e => {
+                    if (!e.target.value) return;
+                    const next = [...dataList];
+                    next[indexData] = {
+                      ...next[indexData],
+                      password: crypto.createHash("sha256").update(e.target.value).digest("hex"),
+                    };
+                    setDataList(next);
+                  }}
+                  autoComplete="new-password" />
+              </div>
+            </div>
+            <div className="io-field">
+              <label className="io-label">Nama Lengkap</label>
+              <input className="io-input" type="text"
+                value={dataList[indexData]?.information.fullname ?? ""}
+                onChange={e => {
+                  const next = [...dataList];
+                  next[indexData] = { ...next[indexData], information: { ...next[indexData].information, fullname: e.target.value } };
+                  setDataList(next);
+                }} />
+            </div>
+            <div className="io-field-row">
+              <div className="io-field">
+                <label className="io-label">Email</label>
+                <input className="io-input" type="email"
+                  value={dataList[indexData]?.information.email ?? ""}
+                  onChange={e => {
+                    const next = [...dataList];
+                    next[indexData] = { ...next[indexData], information: { ...next[indexData].information, email: e.target.value } };
+                    setDataList(next);
+                  }} />
+              </div>
+              <div className="io-field">
+                <label className="io-label">No. Telepon</label>
+                <input className="io-input" type="text"
+                  value={dataList[indexData]?.information.phone ?? ""}
+                  onChange={e => {
+                    const next = [...dataList];
+                    next[indexData] = { ...next[indexData], information: { ...next[indexData].information, phone: e.target.value } };
+                    setDataList(next);
+                  }} />
+              </div>
+            </div>
+          </div>
+          <div className="io-mfoot">
+            <button className="io-btn io-btn-ghost" onClick={closeEdit}>Batal</button>
+            <button className="io-btn io-btn-primary" onClick={saveEdit} disabled={process}>
+              {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoEdit /> Simpan Perubahan</>}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CONFIRM DELETE ── */}
+      <div className="io-overlay" ref={overlayDel} onClick={e => { if (e.target === overlayDel.current) closeDel(); }}>
+        <div className="io-confirm-box" onClick={e => e.stopPropagation()}>
+          <div className="io-confirm-icon"><IcoTrash /></div>
+          <p className="io-confirm-title">Hapus admin?</p>
+          <p className="io-confirm-msg">
+            Admin <strong>{deleteTgt?.name}</strong> akan dihapus permanen.
+            Tindakan ini tidak dapat dibatalkan.
+          </p>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+            <button className="io-btn io-btn-ghost io-btn-sm" onClick={closeDel}>Batal</button>
+            <button className="io-btn io-btn-danger io-btn-sm" onClick={doDelete}>
+              <IcoTrash /> Hapus
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── TOAST ── */}
+      {toast && (
+        <div className={`io-toast ${toast ? "io-toast-show" : "io-toast-hide"}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke={toast.ok ? "oklch(68% 0.14 165)" : "oklch(68% 0.19 27)"}
+            strokeWidth="2.2" strokeLinecap="round">
+            {toast.ok
+              ? <polyline points="20 6 9 17 4 12" />
+              : <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
+          </svg>
+          {toast.msg}
+        </div>
+      )}
+    </>
+  );
 }
