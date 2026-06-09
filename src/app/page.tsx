@@ -40,7 +40,7 @@ export default function Home() {
         {/* Technical Grid Background */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, transparent calc(50% - 0.5px), oklch(99% 0.005 250 / 0.03) calc(50% - 0.5px), oklch(99% 0.005 250 / 0.03) 50%, transparent 50%)",
+          background: "linear-gradient(to bottom, transparent calc(50% - 1px), oklch(99% 0.005 250 / 0.03) calc(50% - 1px), oklch(99% 0.005 250 / 0.03) 50%, transparent 50%)",
           backgroundSize: "10px 10px",
           pointerEvents: "none"
         }} />
