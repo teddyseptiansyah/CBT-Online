@@ -325,23 +325,34 @@ export default function ExamEdit() {
         </div>
       </div>
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <ClassroomList.Provider value={classrooms}>
             <Navbar />
           </ClassroomList.Provider>
         </UserData.Provider>
 
-        <main className="io-main">
-          <div className="io-ph">
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", 
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
+          <div className="io-ph" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <p className="io-eyebrow">Instruktur</p>
-              <h1 className="io-title">Editor <strong>Ujian</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Instruktur</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Editor <strong>Ujian</strong></h1>
             </div>
             {!saved && (
-              <button className="io-btn io-btn-primary" onClick={saving} disabled={process}>
-                {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoSave /> Simpan</>}
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button className="io-btn io-btn-primary" onClick={saving} disabled={process}>
+                  {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoSave /> Simpan</>}
+                </button>
+              </div>
             )}
           </div>
 

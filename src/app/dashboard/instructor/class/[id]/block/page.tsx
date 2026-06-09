@@ -22,14 +22,6 @@ const IcoClose = () => (
     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
   </svg>
 )
-const IcoTrash = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-    <polyline points="3 6 5 6 21 6"/>
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-    <path d="M10 11v6M14 11v6"/>
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-  </svg>
-)
 const IcoSearch = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -138,14 +130,15 @@ export default function BlockPage() {
                 value={src}
                 onChange={e => setSrc(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") loadUser() }}
+                style={{ width: "100%" }}
               />
             </div>
             <button className="io-btn io-btn-ghost io-btn-sm" onClick={loadUser} style={{ marginBottom: "12px" }}>
               Cari
             </button>
-            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
-              <table className="io-table">
-                <thead>
+            <div style={{ maxHeight: "50vh", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px" }}>
+              <table className="io-table" style={{ margin: 0 }}>
+                <thead style={{ position: "sticky", top: 0, zIndex: 5 }}>
                   <tr>
                     <th>No</th>
                     <th>User</th>
@@ -153,10 +146,19 @@ export default function BlockPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((v, i) => (
-                    <tr key={v._id as string}>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} style={{ textAlign: "center", padding: "24px 12px", color: "var(--ink-3)", fontSize: "13px" }}>
+                        Pencarian kosong
+                      </td>
+                    </tr>
+                  ) : users.map((v, i) => (
+                    <tr key={v._id as string} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td>{i + 1}</td>
-                      <td><span className="io-td-user">{v.username}</span> <span style={{ color: "oklch(55% 0.03 258)", fontSize: "0.8rem" }}>({v.information.fullname})</span></td>
+                      <td>
+                        <span className="io-td-user">{v.username}</span> 
+                        <span style={{ color: "var(--ink-3)", fontSize: "0.8rem", marginLeft: "4px" }}>({v.information.fullname})</span>
+                      </td>
                       <td>
                         <button className="io-btn io-btn-danger io-btn-sm" onClick={() => addUser(v._id as string)}>
                           <IcoPlus /> Blokir
@@ -174,27 +176,44 @@ export default function BlockPage() {
         </div>
       </div>
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      {/* Container utama dengan min-height agar bisa di-scroll secara alami */}
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <ClassroomList.Provider value={classrooms}>
             <Navbar />
           </ClassroomList.Provider>
         </UserData.Provider>
 
-        <main className="io-main">
-          <div className="io-ph">
+        {/* Main Content Area */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", /* 88px di atas memastikan tidak tertutup Navbar */
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
+          
+          {/* Page header */}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <p className="io-eyebrow">Manajemen Kelas</p>
-              <h1 className="io-title">Daftar <strong>User Diblokir</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Manajemen Kelas</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Daftar <strong>User Diblokir</strong></h1>
             </div>
-            <button className="io-btn io-btn-danger" onClick={async () => { openAdd(); await loadUser() }}>
-              <IcoPlus /> Blokir User
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span className="io-count">{blockUsers.length} user</span>
+              <button className="io-btn io-btn-danger" onClick={async () => { openAdd(); await loadUser() }}>
+                <IcoPlus /> Blokir User
+              </button>
+            </div>
           </div>
 
-          <div className="io-card">
-            <div style={{ overflowX: "auto" }}>
-              <table className="io-table">
+          {/* Table card */}
+          <div className="io-card" style={{ width: "100%" }}>
+            <div style={{ width: "100%", overflowX: "auto" }}>
+              <table className="io-table" style={{ margin: 0 }}>
                 <thead>
                   <tr>
                     <th>No</th>
@@ -206,23 +225,25 @@ export default function BlockPage() {
                   {blockUsers.length === 0 ? (
                     <tr>
                       <td colSpan={3}>
-                        <div className="io-empty">
+                        <div className="io-empty" style={{ padding: "60px 20px" }}>
                           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                             <circle cx="12" cy="12" r="10"/>
                             <path d="M4.93 4.93l14.14 14.14"/>
                           </svg>
-                          <p>Belum ada user diblokir</p>
+                          <p style={{ fontSize: "14px", margin: "10px 0 0" }}>Belum ada user diblokir</p>
                         </div>
                       </td>
                     </tr>
                   ) : blockUsers.map((v, i) => (
-                    <tr key={v._id as string}>
+                    <tr key={v._id as string} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td>{i + 1}</td>
-                      <td>{v.information.fullname}</td>
+                      <td style={{ fontSize: "14px" }}>{v.information.fullname}</td>
                       <td>
-                        <button className="io-btn io-btn-ghost io-btn-sm" onClick={() => deleteUser(v._id as string)}>
-                          Buka Blokir
-                        </button>
+                        <div className="io-td-actions">
+                          <button className="io-btn io-btn-ghost io-btn-sm" onClick={() => deleteUser(v._id as string)}>
+                            Buka Blokir
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

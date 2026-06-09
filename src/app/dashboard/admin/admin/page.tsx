@@ -183,18 +183,29 @@ export default function AdminEditorPage() {
     <>
       <Splash isLoad={load} />
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      {/* Container utama dengan min-height agar bisa di-scroll secara alami */}
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <Navbar />
         </UserData.Provider>
 
-        <main className="io-main">
+        {/* Main Content Area */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", /* 88px di atas memastikan tidak tertutup Navbar */
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
 
           {/* Page header */}
-          <div className="io-ph">
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <p className="io-eyebrow">Manajemen</p>
-              <h1 className="io-title">Daftar <strong>Admin</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Manajemen</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Daftar <strong>Admin</strong></h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span className="io-count">{dataList.length} admin</span>
@@ -205,8 +216,8 @@ export default function AdminEditorPage() {
           </div>
 
           {/* Table card */}
-          <div className="io-card">
-            <div className="io-toolbar">
+          <div className="io-card" style={{ width: "100%" }}>
+            <div className="io-toolbar" style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)" }}>
               <div className="io-search-wrap">
                 <span className="io-search-icon"><IcoSearch /></span>
                 <input
@@ -223,18 +234,18 @@ export default function AdminEditorPage() {
             </div>
 
             {filtered.length === 0 ? (
-              <div className="io-empty">
+              <div className="io-empty" style={{ padding: "40px 20px" }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                   <circle cx="9" cy="7" r="4"/>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                <p>Belum ada admin terdaftar</p>
+                <p style={{ fontSize: "14px", margin: "10px 0 0" }}>Belum ada admin terdaftar</p>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table className="io-table">
+              <div style={{ width: "100%", overflowX: "auto" }}>
+                <table className="io-table" style={{ margin: 0 }}>
                   <thead>
                     <tr>
                       <th>Username</th>
@@ -245,9 +256,9 @@ export default function AdminEditorPage() {
                   </thead>
                   <tbody>
                     {filtered.map((v, i) => (
-                      <tr key={(v._id as string) ?? i}>
+                      <tr key={(v._id as string) ?? i} style={{ borderBottom: "1px solid var(--border)" }}>
                         <td><span className="io-td-user">{v.username}</span></td>
-                        <td>{v.information.fullname}</td>
+                        <td style={{ fontSize: "14px" }}>{v.information.fullname}</td>
                         <td><span className="io-td-email">{v.information.email}</span></td>
                         <td>
                           <div className="io-td-actions">

@@ -61,23 +61,43 @@ export default function AdminDashboard() {
     <>
       <Splash isLoad={load} />
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      {/* Container utama dengan min-height agar bisa di-scroll secara alami */}
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <Navbar />
         </UserData.Provider>
 
-        <main className="io-main">
+        {/* Main Content Area */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", /* 88px di atas memastikan tidak tertutup Navbar */
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
 
           {/* Page header */}
-          <div className="io-ph">
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
             <div>
-              <p className="io-eyebrow">Admin Panel</p>
-              <h1 className="io-title">Selamat datang, <strong>{userData?.information?.fullname || userData?.username}</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Admin Panel</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>
+                Selamat datang, <strong>{userData?.information?.fullname?.split(" ")[0] || userData?.username}</strong>
+              </h1>
             </div>
           </div>
 
           {/* Menu grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "16px" }}>
+          <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", 
+              gap: "16px",
+              alignItems: "start",
+              alignContent: "start",
+              flex: 1
+          }}>
             {MENU_ITEMS.map(item => (
               <a
                 key={item.href}
@@ -87,7 +107,7 @@ export default function AdminDashboard() {
               >
                 <div className="io-menu-card-body">
                   <p className="io-menu-card-title">{item.title}</p>
-                  <p className="io-menu-card-desc">{item.desc}</p>
+                  <p className="io-menu-card-desc" style={{ margin: 0 }}>{item.desc}</p>
                 </div>
                 <div className="io-menu-card-arrow">
                   <IcoArrow />

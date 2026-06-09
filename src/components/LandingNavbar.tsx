@@ -1,71 +1,83 @@
-"use client";
-import { useState, useEffect } from "react";
-import styles from "./LandingNavbar.module.css";
-
-const navLinks = [
-    { label: "About", href: "#about" },
-    { label: "Docs", href: "#docs" },
-    { label: "Changelog", href: "#changelog" },
-];
+"use client"
+import Link from "next/link";
 
 export default function LandingNavbar() {
-    const [scrolled, setScrolled] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <nav style={{
+      position: "absolute",
+      top: 0, 
+      left: 0, 
+      right: 0, 
+      zIndex: 50,
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "space-between",
+      padding: "24px 40px",
+      backgroundColor: "transparent",
+      borderBottom: "1px solid oklch(99% 0.005 250 / 0.15)",
+    }}>
+      
+      {/* ── Logo ── */}
+      <Link href="/" style={{ 
+        fontFamily: "var(--font-display)",
+        fontSize: "1.2rem", 
+        fontWeight: 700, 
+        color: "white",
+        textDecoration: "none", 
+        letterSpacing: "0.08em" 
+      }}>
+        OPSCBT
+      </Link>
 
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 40);
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+      {/* ── Menu Links ── */}
+      <div style={{ display: "flex", gap: "32px", alignItems: "center" }}>
+        <Link href="#about" style={{ 
+            fontFamily: "var(--font-body)", 
+            fontSize: "0.95rem", 
+            color: "oklch(99% 0.005 250 / 0.75)", 
+            textDecoration: "none",
+            fontWeight: 400
+        }}>
+          Fitur
+        </Link>
+        <Link href="#docs" style={{ 
+            fontFamily: "var(--font-body)", 
+            fontSize: "0.95rem", 
+            color: "oklch(99% 0.005 250 / 0.75)", 
+            textDecoration: "none",
+            fontWeight: 400
+        }}>
+          Docs
+        </Link>
+        <Link href="#changelog" style={{ 
+            fontFamily: "var(--font-body)", 
+            fontSize: "0.95rem", 
+            color: "oklch(99% 0.005 250 / 0.75)", 
+            textDecoration: "none",
+            fontWeight: 400
+        }}>
+          Changelog
+        </Link>
+      </div>
 
-    function scrollTo(href: string) {
-        const id = href.replace("#", "");
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth" });
-        setMenuOpen(false);
-    }
-
-    return (
-        <>
-            <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ""}`}>
-                <div className={styles.inner}>
-                    <a href="/" className={styles.logo}>
-                        <img src="/img/HeaderLogo.svg" alt="OPSCBT" />
-                    </a>
-                    <ul className={styles.links}>
-                        {navLinks.map((l) => (
-                            <li key={l.label}>
-                                <a href={l.href} onClick={(e) => { e.preventDefault(); scrollTo(l.href); }}>
-                                    {l.label}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                    <div className={styles.actions}>
-                        <a href="/signin" className={styles.btnPrimary}>
-                            Sign In
-                        </a>
-                        <button
-                            className={`${styles.burger} ${menuOpen ? styles.open : ""}`}
-                            onClick={() => setMenuOpen(!menuOpen)}
-                            aria-label="Menu"
-                        >
-                            <span /><span /><span />
-                        </button>
-                    </div>
-                </div>
-            </nav>
-            {menuOpen && (
-                <div className={styles.mobileMenu}>
-                    {navLinks.map((l) => (
-                        <a key={l.label} href={l.href} onClick={(e) => { e.preventDefault(); scrollTo(l.href); }}>
-                            {l.label}
-                        </a>
-                    ))}
-                    <div className={styles.sep} />
-                    <a href="/signin" className={styles.btnPrimary} onClick={() => setMenuOpen(false)}>Sign In</a>
-                </div>
-            )}
-        </>
-    );
+      {/* ── Sign In Button ── */}
+      <div>
+        <Link href="/signin" style={{ 
+          fontFamily: "var(--font-display)",
+          fontSize: "0.95rem", 
+          fontWeight: 600, 
+          color: "white",
+          textDecoration: "none",
+          padding: "10px 24px", 
+          backgroundColor: "oklch(99% 0.005 250 / 0.12)",
+          border: "1px solid oklch(99% 0.005 250 / 0.25)", 
+          borderRadius: "8px",
+          transition: "all 150ms ease"
+        }}>
+          Sign In
+        </Link>
+      </div>
+      
+    </nav>
+  );
 }

@@ -138,14 +138,15 @@ export default function AllowPage() {
                 value={src}
                 onChange={e => setSrc(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") loadUser() }}
+                style={{ width: "100%" }}
               />
             </div>
             <button className="io-btn io-btn-ghost io-btn-sm" onClick={loadUser} style={{ marginBottom: "12px" }}>
               Cari
             </button>
-            <div style={{ maxHeight: "50vh", overflowY: "auto" }}>
-              <table className="io-table">
-                <thead>
+            <div style={{ maxHeight: "50vh", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "8px" }}>
+              <table className="io-table" style={{ margin: 0 }}>
+                <thead style={{ position: "sticky", top: 0, zIndex: 5 }}>
                   <tr>
                     <th>No</th>
                     <th>User</th>
@@ -153,10 +154,19 @@ export default function AllowPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((v, i) => (
-                    <tr key={v._id as string}>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} style={{ textAlign: "center", padding: "24px 12px", color: "var(--ink-3)", fontSize: "13px" }}>
+                        Pencarian kosong
+                      </td>
+                    </tr>
+                  ) : users.map((v, i) => (
+                    <tr key={v._id as string} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td>{i + 1}</td>
-                      <td><span className="io-td-user">{v.username}</span> <span style={{ color: "oklch(55% 0.03 258)", fontSize: "0.8rem" }}>({v.information.fullname})</span></td>
+                      <td>
+                        <span className="io-td-user">{v.username}</span> 
+                        <span style={{ color: "var(--ink-3)", fontSize: "0.8rem", marginLeft: "4px" }}>({v.information.fullname})</span>
+                      </td>
                       <td>
                         <button className="io-btn io-btn-ghost io-btn-sm" onClick={() => addUser(v._id as string)}>
                           <IcoPlus /> Tambah
@@ -174,27 +184,44 @@ export default function AllowPage() {
         </div>
       </div>
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      {/* Container utama dengan min-height agar bisa di-scroll secara alami */}
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <ClassroomList.Provider value={classrooms}>
             <Navbar />
           </ClassroomList.Provider>
         </UserData.Provider>
 
-        <main className="io-main">
-          <div className="io-ph">
+        {/* Main Content Area */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", /* 88px di atas memastikan tidak tertutup Navbar */
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
+          
+          {/* Page header */}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <p className="io-eyebrow">Manajemen Kelas</p>
-              <h1 className="io-title">Daftar <strong>User Diizinkan</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Manajemen Kelas</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Daftar <strong>User Diizinkan</strong></h1>
             </div>
-            <button className="io-btn io-btn-primary" onClick={async () => { openAdd(); await loadUser() }}>
-              <IcoPlus /> Tambah User
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span className="io-count">{allowUsers.length} user</span>
+              <button className="io-btn io-btn-primary" onClick={async () => { openAdd(); await loadUser() }}>
+                <IcoPlus /> Tambah User
+              </button>
+            </div>
           </div>
 
-          <div className="io-card">
-            <div style={{ overflowX: "auto" }}>
-              <table className="io-table">
+          {/* Table card */}
+          <div className="io-card" style={{ width: "100%" }}>
+            <div style={{ width: "100%", overflowX: "auto" }}>
+              <table className="io-table" style={{ margin: 0 }}>
                 <thead>
                   <tr>
                     <th>No</th>
@@ -206,22 +233,24 @@ export default function AllowPage() {
                   {allowUsers.length === 0 ? (
                     <tr>
                       <td colSpan={3}>
-                        <div className="io-empty">
+                        <div className="io-empty" style={{ padding: "60px 20px" }}>
                           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                           </svg>
-                          <p>Belum ada user diizinkan</p>
+                          <p style={{ fontSize: "14px", margin: "10px 0 0" }}>Belum ada user diizinkan</p>
                         </div>
                       </td>
                     </tr>
                   ) : allowUsers.map((v, i) => (
-                    <tr key={v._id as string}>
+                    <tr key={v._id as string} style={{ borderBottom: "1px solid var(--border)" }}>
                       <td>{i + 1}</td>
-                      <td>{v.information.fullname}</td>
+                      <td style={{ fontSize: "14px" }}>{v.information.fullname}</td>
                       <td>
-                        <button className="io-btn io-btn-danger io-btn-sm" onClick={() => deleteUser(v._id as string)}>
-                          <IcoTrash /> Hapus
-                        </button>
+                        <div className="io-td-actions">
+                          <button className="io-btn io-btn-danger io-btn-sm" onClick={() => deleteUser(v._id as string)}>
+                            <IcoTrash /> Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

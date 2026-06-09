@@ -33,7 +33,7 @@ export default function InstructorEditorPage() {
   const overlayEdit = useRef<HTMLDivElement>(null);
   const overlayDel  = useRef<HTMLDivElement>(null);
 
-  /* auth */
+  /* ── auth ── */
   useEffect(() => {
     fetch("/api/auth/", {
       method: "post",
@@ -64,14 +64,14 @@ export default function InstructorEditorPage() {
 
   useEffect(() => { if (!load) loadDataList(); }, [load]);
 
-  /* toast */
+  /* ── toast ── */
   function showToast(msg: string, ok = true) {
     clearTimeout(toastTimer.current);
     setToast({ msg, ok });
     toastTimer.current = setTimeout(() => setToast(null), 3200);
   }
 
-  /* modal helpers */
+  /* ── modal helpers ── */
   const openNew   = () => overlayNew.current?.classList.add("io-open");
   const closeNew  = () => overlayNew.current?.classList.remove("io-open");
   const openEdit  = () => overlayEdit.current?.classList.add("io-open");
@@ -79,7 +79,7 @@ export default function InstructorEditorPage() {
   const openDel   = () => overlayDel.current?.classList.add("io-open");
   const closeDel  = () => { overlayDel.current?.classList.remove("io-open"); setDeleteTgt(null); };
 
-  /* save new */
+  /* ── save new ── */
   async function saveNew() {
     setProcess(true);
     const res  = await fetch("/api/admin/", {
@@ -98,7 +98,7 @@ export default function InstructorEditorPage() {
     }
   }
 
-  /* save edit */
+  /* ── save edit ── */
   async function saveEdit() {
     setProcess(true);
     const res  = await fetch("/api/admin/", {
@@ -116,7 +116,7 @@ export default function InstructorEditorPage() {
     }
   }
 
-  /* delete */
+  /* ── delete ── */
   async function doDelete() {
     if (!deleteTgt) return;
     const res  = await fetch("/api/admin/", {
@@ -143,7 +143,7 @@ export default function InstructorEditorPage() {
     );
   });
 
-  /* icon helpers */
+  /* ── icon helpers ── */
   const IcoPlus = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -183,18 +183,29 @@ export default function InstructorEditorPage() {
     <>
       <Splash isLoad={load} />
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      {/* Container utama dengan min-height agar bisa di-scroll secara alami */}
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <Navbar />
         </UserData.Provider>
 
-        <main className="io-main">
+        {/* Main Content Area */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", /* 88px di atas memastikan tidak tertutup Navbar */
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
 
           {/* Page header */}
-          <div className="io-ph">
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <p className="io-eyebrow">Manajemen Pengguna</p>
-              <h1 className="io-title">Daftar <strong>Instruktur</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Manajemen Pengguna</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Daftar <strong>Instruktur</strong></h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span className="io-count">{dataList.length} instruktur</span>
@@ -205,8 +216,8 @@ export default function InstructorEditorPage() {
           </div>
 
           {/* Table card */}
-          <div className="io-card">
-            <div className="io-toolbar">
+          <div className="io-card" style={{ width: "100%" }}>
+            <div className="io-toolbar" style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)" }}>
               <div className="io-search-wrap">
                 <span className="io-search-icon"><IcoSearch /></span>
                 <input
@@ -223,17 +234,17 @@ export default function InstructorEditorPage() {
             </div>
 
             {filtered.length === 0 ? (
-              <div className="io-empty">
+              <div className="io-empty" style={{ padding: "40px 20px" }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                   <circle cx="9" cy="7" r="4"/>
                   <line x1="23" y1="11" x2="17" y2="11"/>
                 </svg>
-                <p>Belum ada instruktur terdaftar</p>
+                <p style={{ fontSize: "14px", margin: "10px 0 0" }}>Belum ada instruktur terdaftar</p>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table className="io-table">
+              <div style={{ width: "100%", overflowX: "auto" }}>
+                <table className="io-table" style={{ margin: 0 }}>
                   <thead>
                     <tr>
                       <th>Username</th>
@@ -245,9 +256,9 @@ export default function InstructorEditorPage() {
                   </thead>
                   <tbody>
                     {filtered.map((v, i) => (
-                      <tr key={(v._id as string) ?? i}>
+                      <tr key={(v._id as string) ?? i} style={{ borderBottom: "1px solid var(--border)" }}>
                         <td><span className="io-td-user">{v.username}</span></td>
-                        <td>{v.information.fullname}</td>
+                        <td style={{ fontSize: "14px" }}>{v.information.fullname}</td>
                         <td><span className="io-td-email">{v.information.email}</span></td>
                         <td><span className="io-badge io-badge-active">Aktif</span></td>
                         <td>

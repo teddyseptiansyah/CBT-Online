@@ -16,14 +16,14 @@ const IcoArrow = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="non
 
 const Modal = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div style={{ position:"fixed", inset:0, zIndex:99, background:"rgba(0,0,0,0.45)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-    <div className="io-card" style={{ width:"380px", padding:"24px" }}>
+    <div className="io-card" style={{ width:"380px", padding:"24px", transform: "scale(1)", transition: "all 150ms ease" }}>
       <p className="io-mtitle" style={{ marginBottom:"16px" }}>{title}</p>
       {children}
     </div>
   </div>
 )
 
-const Divider = () => <div style={{ borderTop:"1px solid var(--io-border)", margin:"16px 0" }} />
+const Divider = () => <div style={{ borderTop:"1px solid var(--border)", margin:"20px 0" }} />
 
 export default function ClassDetail() {
   const { id } = useParams()
@@ -80,20 +80,22 @@ export default function ClassDetail() {
     <>
       <Splash isLoad={load} />
 
+      {/* MODAL: HAPUS */}
       {modal === "delete" && (
         <Modal title="Hapus Classroom?">
-          <p style={{ fontSize:"13px", color:"var(--io-text-muted)", marginBottom:"20px" }}>Tindakan ini tidak bisa dibatalkan.</p>
+          <p style={{ fontSize:"13px", color:"var(--ink-3)", marginBottom:"24px" }}>Tindakan ini tidak bisa dibatalkan. Semua ujian terkait akan terhapus.</p>
           <div style={{ display:"flex", gap:"8px", justifyContent:"flex-end" }}>
-            <button className="io-btn io-btn-ghost" onClick={() => setModal(null)}>Batal</button>
-            <button className="io-btn io-btn-danger" onClick={deleteClass}><IcoTrash /> Hapus</button>
+            <button type="button" className="io-btn io-btn-ghost" onClick={() => setModal(null)}>Batal</button>
+            <button type="button" className="io-btn io-btn-danger" onClick={deleteClass}><IcoTrash /> Hapus</button>
           </div>
         </Modal>
       )}
 
+      {/* MODAL: TAMBAH UJIAN */}
       {modal === "exam" && (
         <Modal title="Tambah Ujian">
           <form onSubmit={addExam}>
-            <div className="io-field" style={{ marginBottom:"16px" }}>
+            <div className="io-field" style={{ marginBottom:"20px" }}>
               <label className="io-label">Nama Ujian</label>
               <input className="io-input" type="text" placeholder="cth. Ujian Tengah Semester" value={examName} onChange={e => setExamName(e.target.value)} required />
             </div>
@@ -107,81 +109,122 @@ export default function ClassDetail() {
         </Modal>
       )}
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <ClassroomList.Provider value={classrooms}>
             <Navbar />
           </ClassroomList.Provider>
         </UserData.Provider>
 
-        <main className="io-main" style={{ paddingTop:"72px" }}>
-          {/* compact page header */}
-          <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:"16px" }}>
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", 
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
+          
+          {/* Page header */}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", borderBottom: "1px solid var(--border)", paddingBottom: "16px" }}>
             <div>
-              <p className="io-eyebrow" style={{ marginBottom:"2px" }}>Instructor</p>
-              <h1 className="io-title" style={{ margin:0 }}>Detail <strong>Classroom</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Instruktur</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Detail <strong>Classroom</strong></h1>
             </div>
           </div>
-          <div style={{ borderTop:"1px solid var(--io-border)", marginBottom:"16px" }} />
 
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px", alignItems:"start" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(400px, 1fr))", gap:"24px", alignItems:"start" }}>
 
-            {/* ── Kiri: semua dalam 1 card ── */}
+            {/* ── KIRI: PENGATURAN CLASSROOM ── */}
             <div className="io-card" style={{ padding:"24px" }}>
-
-              <p className="io-mtitle" style={{ marginBottom:"16px" }}>Informasi Classroom</p>
+              <p className="io-eyebrow" style={{ color: "var(--ink-2)", marginBottom:"16px", fontSize: "12px", letterSpacing: "0.1em" }}>Pengaturan</p>
+              
               <form onSubmit={e => { e.preventDefault(); setProcess(true); updateClass() }}>
                 <div className="io-field" style={{ marginBottom:"14px" }}>
                   <label className="io-label">Nama Classroom</label>
                   <input className="io-input" type="text" value={classes.name}
                     onChange={e => { setClasses({ ...classes, name:e.target.value }); setChange(true) }} />
-                  {errorMsg && <p style={{ color:"oklch(68% 0.19 27)", fontSize:"12px", marginTop:"4px" }}>{errorMsg}</p>}
+                  {errorMsg && <p style={{ color:"var(--red)", fontSize:"12px", marginTop:"6px", fontWeight: 500 }}>{errorMsg}</p>}
                 </div>
-                <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom: change ? "14px" : "0" }}>
+                
+                <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom: change ? "16px" : "0" }}>
                   <input id="cbx-public" type="checkbox" checked={classes.is_public}
                     onChange={() => { setClasses({ ...classes, is_public:!classes.is_public }); setChange(true) }}
-                    style={{ accentColor:"oklch(55% 0.14 258)", width:"14px", height:"14px", cursor:"pointer" }} />
-                  <label htmlFor="cbx-public" className="io-label" style={{ margin:0, cursor:"pointer" }}>Jadikan Publik</label>
+                    style={{ accentColor:"var(--navy)", width:"16px", height:"16px", cursor:"pointer" }} />
+                  <label htmlFor="cbx-public" style={{ margin:0, cursor:"pointer", fontSize: "14px", fontWeight: 500, color: "var(--ink)" }}>Jadikan Publik</label>
                 </div>
+
                 {change && (
                   <div style={{ display:"flex", justifyContent:"flex-end" }}>
                     <button type="submit" className="io-btn io-btn-primary" disabled={process}>
-                      {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoSave /> Simpan</>}
+                      {process ? <><span className="io-spin" /> Menyimpan…</> : <><IcoSave /> Simpan Perubahan</>}
                     </button>
                   </div>
                 )}
               </form>
 
               <Divider />
-              <p className="io-mtitle" style={{ marginBottom:"12px" }}>Akses</p>
-              <div style={{ display:"flex", gap:"8px", marginBottom:"0" }}>
+              
+              <p className="io-eyebrow" style={{ color: "var(--ink-2)", marginBottom:"12px", fontSize: "12px", letterSpacing: "0.1em" }}>Akses Peserta</p>
+              <div style={{ display:"flex", flexWrap: "wrap", gap:"8px", marginBottom:"0" }}>
                 <a href={`/dashboard/instructor/class/${id}/allow`} className="io-btn io-btn-ghost">Allow Users</a>
                 <a href={`/dashboard/instructor/class/${id}/block`} className="io-btn io-btn-ghost">Block Users</a>
               </div>
 
               <Divider />
-              <p className="io-mtitle" style={{ marginBottom:"12px" }}>Tindakan</p>
-              <button className="io-btn io-btn-danger" onClick={() => setModal("delete")}><IcoTrash /> Hapus Classroom</button>
+              
+              <p className="io-eyebrow" style={{ color: "var(--red)", marginBottom:"12px", fontSize: "12px", letterSpacing: "0.1em" }}>Zona Berbahaya</p>
+              <button className="io-btn io-btn-danger" onClick={() => setModal("delete")}>
+                <IcoTrash /> Hapus Classroom
+              </button>
             </div>
 
-            {/* ── Kanan: Exam ── */}
-            <div className="io-card" style={{ padding:"24px" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
-                <p className="io-mtitle">Daftar Ujian</p>
-                <button className="io-btn io-btn-primary" onClick={() => setModal("exam")}><IcoPlus /> Tambah</button>
+            {/* ── KANAN: DAFTAR UJIAN ── */}
+            <div className="io-card" style={{ display: "flex", flexDirection: "column", minHeight: "300px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
+                <p className="io-eyebrow" style={{ color: "var(--ink-2)", margin: 0, fontSize: "12px", letterSpacing: "0.1em" }}>Daftar Ujian</p>
+                <button className="io-btn io-btn-primary io-btn-sm" onClick={() => setModal("exam")}><IcoPlus /> Tambah Ujian</button>
               </div>
-              {examList.length === 0
-                ? <p style={{ fontSize:"13px", color:"var(--io-text-muted)" }}>Belum ada ujian.</p>
-                : <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+              
+              <div style={{ padding: "24px", flex: 1 }}>
+                {examList.length === 0 ? (
+                  <div className="io-empty" style={{ padding: "40px 10px" }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <p style={{ fontSize: "13px", marginTop: "12px" }}>Belum ada ujian yang dibuat.</p>
+                  </div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
                     {examList.map((v: Exam) => (
                       <a key={v._id} href={`/dashboard/instructor/class/${id}/${v._id}`}
-                        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", border:"1px solid var(--io-border)", borderRadius:"8px", textDecoration:"none", color:"inherit" }}>
+                        style={{ 
+                          display:"flex", alignItems:"center", justifyContent:"space-between", 
+                          padding:"14px 18px", border:"1px solid var(--border)", 
+                          borderRadius:"8px", textDecoration:"none", color:"var(--ink)",
+                          transition: "border-color 150ms ease, background 150ms ease"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "var(--navy-light)"
+                          e.currentTarget.style.background = "var(--navy-fog)"
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "var(--border)"
+                          e.currentTarget.style.background = "transparent"
+                        }}
+                      >
                         <span style={{ fontSize:"14px", fontWeight:500 }}>{v.exam_name}</span>
-                        <IcoArrow />
+                        <span style={{ color: "var(--navy-light)" }}><IcoArrow /></span>
                       </a>
                     ))}
                   </div>
-              }
+                )}
+              </div>
             </div>
 
           </div>

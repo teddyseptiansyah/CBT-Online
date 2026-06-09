@@ -1,21 +1,23 @@
+/* Hallmark · macrostructure: Workbench · genre: modern-minimal
+ * tone: institutional-austere · anchor hue: oklch(28% 0.14 258) navy
+ */
 "use client"
-
-import { Users } from "@/app/api/[[...route]]/types/user";
-import Navbar from "@/components/InstructorNavbar";
-import Splash from "@/components/splash";
-import { UserData } from "@/context/UserData";
-import { ClassroomList } from "@/context/ClassroomList";
-import { useEffect, useRef, useState } from "react";
-import { Classroom } from "@/app/api/[[...route]]/types/class";
+import { Users } from "@/app/api/[[...route]]/types/user"
+import Navbar from "@/components/InstructorNavbar"
+import Splash from "@/components/splash"
+import { UserData } from "@/context/UserData"
+import { useEffect, useRef, useState } from "react"
+import { ClassroomList } from "@/context/ClassroomList"
+import { Classroom } from "@/app/api/[[...route]]/types/class"
 
 export default function AddClass() {
-  const [userData,  setUserData]  = useState<Users>()
-  const [load,      setLoad]      = useState(true)
-  const [input,     setInput]     = useState({ classname: "", ispublic: false })
-  const [process,   setProcess]   = useState(false)
-  const [errorMsg,  setErrorMsg]  = useState("")
-  const [classrooms,setClassrooms]= useState<Classroom[]>([])
-  const [toast,     setToast]     = useState<{ msg: string; ok: boolean } | null>(null)
+  const [userData,   setUserData]   = useState<Users>()
+  const [load,       setLoad]       = useState(true)
+  const [input,      setInput]      = useState({ classname: "", ispublic: false })
+  const [process,    setProcess]    = useState(false)
+  const [errorMsg,   setErrorMsg]   = useState("")
+  const [classrooms, setClassrooms] = useState<Classroom[]>([])
+  const [toast,      setToast]      = useState<{ msg: string; ok: boolean } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout>>()
 
   function showToast(msg: string, ok = true) {
@@ -58,7 +60,7 @@ export default function AddClass() {
       }),
     }).then(r => r.json()).then(json => {
       if (json.status === "OK") {
-        document.location.href = "/dashboard"
+        document.location.href = "/dashboard/instructor"
       } else if (json.status === "EXIST") {
         setProcess(false)
         setErrorMsg("Classroom sudah ada.")
@@ -81,29 +83,34 @@ export default function AddClass() {
     <>
       <Splash isLoad={load} />
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <ClassroomList.Provider value={classrooms}>
             <Navbar />
           </ClassroomList.Provider>
         </UserData.Provider>
 
-        <main className="io-main">
+        {/* Padding top 88px untuk menghindari navbar */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            padding: "88px 24px 40px", 
+            maxWidth: "600px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
 
-          <div className="io-ph">
+          <div className="io-ph" style={{ border: "none", marginBottom: "24px" }}>
             <div>
-              <p className="io-eyebrow">Instructor</p>
-              <h1 className="io-title">Buat <strong>Classroom Baru</strong></h1>
+              <p className="io-eyebrow" style={{ fontSize: "11px", marginBottom: "6px" }}>Instructor</p>
+              <h1 className="io-title" style={{ fontSize: "28px" }}>Buat <strong>Classroom Baru</strong></h1>
             </div>
           </div>
 
-          <div className="io-card" style={{ padding: "32px" }}>
-            <div style={{ borderBottom: "1px solid var(--io-border)", paddingBottom: "20px", marginBottom: "32px" }}>
-              <span className="io-mtitle">Detail Classroom</span>
-            </div>
-
+          <div className="io-card" style={{ padding: "24px" }}>
             <form onSubmit={e => { e.preventDefault(); setProcess(true); submit() }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
                 <div className="io-field">
                   <label className="io-label">Nama Classroom</label>
@@ -116,26 +123,26 @@ export default function AddClass() {
                     required
                   />
                   {errorMsg && (
-                    <p style={{ color: "oklch(68% 0.19 27)", fontSize: "12px", marginTop: "6px" }}>{errorMsg}</p>
+                    <p style={{ color: "var(--red)", fontSize: "12px", marginTop: "8px", fontWeight: 500 }}>{errorMsg}</p>
                   )}
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <input
                     id="cbx-public"
                     type="checkbox"
                     checked={input.ispublic}
                     onChange={() => setInput({ ...input, ispublic: !input.ispublic })}
-                    style={{ accentColor: "oklch(55% 0.14 258)", width: "16px", height: "16px", cursor: "pointer", flexShrink: 0 }}
+                    style={{ accentColor: "var(--navy)", width: "16px", height: "16px", cursor: "pointer", flexShrink: 0 }}
                   />
-                  <label htmlFor="cbx-public" className="io-label" style={{ margin: 0, cursor: "pointer" }}>
+                  <label htmlFor="cbx-public" style={{ margin: 0, cursor: "pointer", fontSize: "14px", fontWeight: 500, color: "var(--ink)" }}>
                     Jadikan Publik
                   </label>
                 </div>
 
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingTop: "36px", borderTop: "1px solid var(--io-border)", marginTop: "36px" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", paddingTop: "24px", borderTop: "1px solid var(--border)", marginTop: "24px" }}>
                 <button
                   type="button"
                   className="io-btn io-btn-ghost"
@@ -151,22 +158,8 @@ export default function AddClass() {
               </div>
             </form>
           </div>
-
         </main>
       </div>
-
-      {toast && (
-        <div className={`io-toast ${toast ? "io-toast-show" : "io-toast-hide"}`}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke={toast.ok ? "oklch(68% 0.14 165)" : "oklch(68% 0.19 27)"}
-            strokeWidth="2.2" strokeLinecap="round">
-            {toast.ok
-              ? <polyline points="20 6 9 17 4 12" />
-              : <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
-          </svg>
-          {toast.msg}
-        </div>
-      )}
     </>
   )
 }

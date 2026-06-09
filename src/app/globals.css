@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
 @tailwind base;
@@ -905,7 +906,7 @@ html, body {
   --green:      oklch(48% 0.14 165);
   --green-bg:   oklch(96% 0.025 165);
   --ff-d: 'DM Sans', sans-serif;
-  --ff-m: 'DM Mono', monospace;
+  --ff-m: 'DM Sans', sans-serif;
   --dur: 180ms;
   --ease: cubic-bezier(.25,.46,.45,.94);
 }
@@ -919,8 +920,9 @@ html, body {
 }
 
 .io-main {
-  padding: calc(7.5rem) 2rem 3rem;
-  max-width: 960px;
+  padding: 88px 24px 40px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -1337,4 +1339,10 @@ html, body {
   letter-spacing: 0.08em;
   color: oklch(28% 0.14 258);
   text-decoration: none;
+}
+
+/* Menimpa font monospace di tabel menjadi font normal (DM Sans) */
+.io-table thead th,
+.io-td-user {
+  font-family: var(--ff-d) !important;
 }

@@ -25,7 +25,7 @@ export default function InstructorDashboard() {
       method: "POST",
       body: JSON.stringify({ method: "AUTHENTICATION" }),
     }).then(r => r.json()).then(json => {
-      if (json.status !== "OK") { document.location.href = "/signin"; return }  // ← fix: tambah return
+      if (json.status !== "OK") { document.location.href = "/signin"; return }
       switch (json.data.role) {
         case "instructor":
           setUserData(json.data)
@@ -65,19 +65,31 @@ export default function InstructorDashboard() {
     <>
       <Splash isLoad={load} />
 
-      <div className={`io-page${load ? " hidden" : ""}`}>
+      {/* Container utama dengan min-height agar bisa di-scroll secara alami */}
+      <div className={`io-page${load ? " hidden" : ""}`} style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <UserData.Provider value={userData as Users}>
           <ClassroomList.Provider value={classrooms}>
             <Navbar />
           </ClassroomList.Provider>
         </UserData.Provider>
 
-        <main className="io-main">
+        {/* Main Content Area */}
+        <main className="io-main" style={{ 
+            flex: 1, 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: "24px", 
+            padding: "88px 24px 40px", /* 88px di atas memastikan tidak tertutup Navbar */
+            maxWidth: "1200px", 
+            margin: "0 auto", 
+            width: "100%",
+        }}>
 
-          <div className="io-ph">
+          {/* Page header */}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <p className="io-eyebrow">Instructor</p>
-              <h1 className="io-title">Daftar <strong>Classroom</strong></h1>
+              <p className="io-eyebrow" style={{ margin: "0 0 6px 0", fontSize: "11px" }}>Instructor</p>
+              <h1 className="io-title" style={{ margin: 0, fontSize: "28px" }}>Daftar <strong>Classroom</strong></h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span className="io-count">{classrooms.length} classroom</span>
@@ -87,8 +99,9 @@ export default function InstructorDashboard() {
             </div>
           </div>
 
-          <div className="io-card">
-            <div className="io-toolbar">
+          {/* Table card */}
+          <div className="io-card" style={{ width: "100%" }}>
+            <div className="io-toolbar" style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)" }}>
               <div className="io-search-wrap">
                 <span className="io-search-icon"><IcoSearch /></span>
                 <input
@@ -105,16 +118,16 @@ export default function InstructorDashboard() {
             </div>
 
             {filtered.length === 0 ? (
-              <div className="io-empty">
+              <div className="io-empty" style={{ padding: "40px 20px" }}>
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                 </svg>
-                <p>Belum ada classroom</p>
+                <p style={{ fontSize: "14px", margin: "10px 0 0" }}>Belum ada classroom</p>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table className="io-table">
+              <div style={{ width: "100%", overflowX: "auto" }}>
+                <table className="io-table" style={{ margin: 0 }}>
                   <thead>
                     <tr>
                       <th>Nama Classroom</th>
@@ -124,19 +137,26 @@ export default function InstructorDashboard() {
                   </thead>
                   <tbody>
                     {filtered.map((v: Classroom, i: number) => (
-                      <tr key={(v._id as string) ?? i}>
+                      <tr key={(v._id as string) ?? i} style={{ borderBottom: "1px solid var(--border)" }}>
                         <td><span className="io-td-user">{v.name}</span></td>
                         <td>
-                          <span style={{
-                            display: "inline-flex", alignItems: "center", gap: "5px",
-                            fontSize: "11px", fontWeight: 500, letterSpacing: "0.04em",
-                            color: v.is_public ? "oklch(68% 0.14 165)" : "oklch(60% 0.08 258)",
-                            background: v.is_public ? "oklch(68% 0.14 165 / 0.1)" : "oklch(60% 0.08 258 / 0.1)",
-                            border: `1px solid ${v.is_public ? "oklch(68% 0.14 165 / 0.25)" : "oklch(60% 0.08 258 / 0.25)"}`,
-                            borderRadius: "4px", padding: "2px 8px",
-                          }}>
-                            {v.is_public ? "Publik" : "Privat"}
-                          </span>
+                          {v.is_public ? (
+                            <span style={{ 
+                              display: "inline-flex", alignItems: "center", gap: "4px", 
+                              fontSize: "11px", fontWeight: 600, color: "var(--green)", 
+                              background: "var(--green-bg)", borderRadius: "6px", padding: "4px 8px" 
+                            }}>
+                              Publik
+                            </span>
+                          ) : (
+                            <span style={{ 
+                              display: "inline-flex", alignItems: "center", gap: "4px", 
+                              fontSize: "11px", fontWeight: 600, color: "var(--ink-2)", 
+                              background: "var(--border)", borderRadius: "6px", padding: "4px 8px" 
+                            }}>
+                              Privat
+                            </span>
+                          )}
                         </td>
                         <td>
                           <div className="io-td-actions">
